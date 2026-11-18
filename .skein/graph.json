@@ -324,15 +324,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "fa77fcca6a284d5293464ba781c6a317",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "de69a5bc26ae45fc86c070925f6bfdc5",
+      "claimed_at": "2026-11-18T19:32:10.431440+00:00",
+      "holder": "agent-3",
+      "last_heartbeat": "2026-11-18T19:32:10.431440+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-3"
     },
     "depends_on": [],
     "evidence": [],
@@ -352,11 +352,11 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Scribe and fake transcribers",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "feat/mock-call-pilot",
       "branch": null,
       "path": null
     }
