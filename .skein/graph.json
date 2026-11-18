@@ -165,7 +165,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "Deploy script and load test",
-    "version": 16,
+    "version": 17,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
