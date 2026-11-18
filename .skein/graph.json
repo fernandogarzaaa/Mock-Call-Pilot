@@ -837,7 +837,16 @@
     }
   },
   "web": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "d79b771ea2904e208ce3fac08316e95e",
+        "ended_at": "2026-11-18T20:12:49.659610+00:00",
+        "error": "completion command failed (adapter exit=0); see evidence",
+        "holder": "agent-2",
+        "outcome": "failed",
+        "started_at": "2026-11-18T20:09:06.960029+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_build_pnpm",
     "backend_config": {
@@ -849,21 +858,34 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "d79b771ea2904e208ce3fac08316e95e",
-      "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
-      "claim_token": "8be2644fe50f4786ad0a08c3aba068a2",
-      "claimed_at": "2026-11-18T20:09:06.960029+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T20:09:06.960029+00:00",
-      "node_version": 1,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "server"
     ],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run public && pnpm exec biome check public && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+        "duration_ms": 3483,
+        "exit_code": 1,
+        "nonce_ok": false,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201246172632_0.log"
+      },
+      {
+        "command": "<adapter:claude_build_pnpm>",
+        "exit_code": 0,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201249656878_adapter.log"
+      }
+    ],
+    "handoff_note": "completion command failed (adapter exit=0); see evidence",
     "id": "web",
     "integration_for": null,
     "intent": {
@@ -876,12 +898,12 @@
     "rejected_count": 0,
     "removed": false,
     "result": null,
-    "retry_at": null,
+    "retry_at": "2026-11-18T20:14:03.587924+00:00",
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "unclaimed",
     "title": "Candidate call page",
-    "version": 3,
+    "version": 11,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
