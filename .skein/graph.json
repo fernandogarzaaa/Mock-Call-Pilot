@@ -335,11 +335,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Kill surviving mutants: picker",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "d997615b663b92dbe4cecd43c90d86a4cea1251e",
+      "branch": "skein/kill-picker",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/kill-picker"
     }
   },
   "kill-script": {
