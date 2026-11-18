@@ -830,7 +830,16 @@
     }
   },
   "verify": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "0c04afaf1f3d40758ed73a2930fbf19e",
+        "ended_at": "2026-11-18T20:20:48.016921+00:00",
+        "error": "completion command failed (adapter exit=0); see evidence",
+        "holder": "agent-2",
+        "outcome": "failed",
+        "started_at": "2026-11-18T20:18:15.220719+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_build_pnpm",
     "backend_config": {
@@ -842,22 +851,35 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "0c04afaf1f3d40758ed73a2930fbf19e",
-      "base_branch": "skein/verify__integrate-base",
-      "claim_token": "4b4ce0e8f832499f9457fb652047cf81",
-      "claimed_at": "2026-11-18T20:18:15.220719+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T20:18:15.220719+00:00",
-      "node_version": 2,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "web",
       "deploy"
     ],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run && pnpm exec biome check . && pnpm exec tsc --noEmit && pnpm exec stryker run && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+        "duration_ms": 7965,
+        "exit_code": 1,
+        "nonce_ok": false,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/verify_20261118T202040049517_0.log"
+      },
+      {
+        "command": "<adapter:claude_build_pnpm>",
+        "exit_code": 0,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/verify_20261118T202048015254_adapter.log"
+      }
+    ],
+    "handoff_note": "completion command failed (adapter exit=0); see evidence",
     "id": "verify",
     "integration_for": null,
     "intent": {
@@ -870,12 +892,12 @@
     "rejected_count": 0,
     "removed": false,
     "result": null,
-    "retry_at": null,
+    "retry_at": "2026-11-18T20:21:45.837415+00:00",
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "unclaimed",
     "title": "Full suite, lint, types, mutation gate",
-    "version": 4,
+    "version": 10,
     "worktree": {
       "base_branch": "skein/verify__integrate-base",
       "base_commit": "2bbf731123eacb1d6c18450cd03e1eadee6d6a0d",
