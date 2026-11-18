@@ -575,10 +575,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
+        "diverged": false,
+        "forced": false,
+        "merge_commit": "6f2214c339852b688d4d711f385d6867d556e0ff",
+        "result_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+        "shipped_at": "2026-11-18T20:24:40.107443+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "HTTP server, views, boot and concurrency tests",
-    "version": 49,
+    "version": 50,
     "worktree": {
       "base_branch": "skein/server__integrate-base",
       "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
