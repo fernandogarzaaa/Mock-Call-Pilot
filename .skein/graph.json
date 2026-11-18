@@ -858,10 +858,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "f35114997fc9d404e62f9d200916ddb90a9755d4",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "7ca78c16598f8abfad5fa9400d60f9f957f3a89a",
+        "result_commit": "afb2d1d6514188fe69d5d46bc9b3c0cd17e540a1",
+        "shipped_at": "2026-11-18T20:24:39.975481+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Scribe and fake transcribers",
-    "version": 6,
+    "version": 7,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "f35114997fc9d404e62f9d200916ddb90a9755d4",
