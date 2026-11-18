@@ -1041,10 +1041,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "a0c33b66b1b0ccc2fae04151aa16ae7a0496a559",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "a2f187aab8960c24ff6563daf8f24ce2f5576ed9",
+        "result_commit": "2bbf731123eacb1d6c18450cd03e1eadee6d6a0d",
+        "shipped_at": "2026-11-18T20:24:40.486364+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Integrate parents of verify",
-    "version": 3,
+    "version": 4,
     "worktree": {
       "base_branch": "a0c33b66b1b0ccc2fae04151aa16ae7a0496a559",
       "branch": "skein/verify__integrate-base",
