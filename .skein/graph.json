@@ -492,11 +492,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Kill surviving mutants: storage",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "6c0847a126bb8726769e022d6609e46928c8695b",
+      "branch": "skein/kill-storage",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/kill-storage"
     }
   },
   "picker": {
