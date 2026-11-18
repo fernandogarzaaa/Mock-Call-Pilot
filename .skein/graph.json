@@ -363,7 +363,16 @@
     }
   },
   "server": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "238c04fe5abe4f2f874b17459dbdc9d6",
+        "ended_at": "2026-11-18T20:01:18.809558+00:00",
+        "error": "completion command failed (adapter exit=0); see evidence",
+        "holder": "agent-2",
+        "outcome": "failed",
+        "started_at": "2026-11-18T19:41:34.313408+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_build_pnpm",
     "backend_config": {
@@ -375,15 +384,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "238c04fe5abe4f2f874b17459dbdc9d6",
-      "base_branch": "skein/server__integrate-base",
-      "claim_token": "eeb5e8cf9a6441a598012f774070099b",
-      "claimed_at": "2026-11-18T19:41:34.313408+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T19:41:34.313408+00:00",
-      "node_version": 2,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "config",
@@ -392,8 +401,21 @@
       "stt",
       "storage"
     ],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run src/server && pnpm exec tsc --noEmit && pnpm exec biome check src/server && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+        "duration_ms": 3279,
+        "exit_code": 1,
+        "nonce_ok": false,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200115527522_0.log"
+      },
+      {
+        "command": "<adapter:claude_build_pnpm>",
+        "exit_code": 0,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200118807845_adapter.log"
+      }
+    ],
+    "handoff_note": "completion command failed (adapter exit=0); see evidence",
     "id": "server",
     "integration_for": null,
     "intent": {
@@ -406,12 +428,12 @@
     "rejected_count": 0,
     "removed": false,
     "result": null,
-    "retry_at": null,
+    "retry_at": "2026-11-18T20:02:24.841552+00:00",
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "unclaimed",
     "title": "HTTP server, views, boot and concurrency tests",
-    "version": 4,
+    "version": 44,
     "worktree": {
       "base_branch": "skein/server__integrate-base",
       "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
