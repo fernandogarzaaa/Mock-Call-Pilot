@@ -8,10 +8,20 @@
     "public/call-core.js",
     "!src/**/*.test.ts",
     "!src/server/main.ts",
-    "!src/types/**"
+    "!src/types/**",
+    "!src/script/fixture.ts"
   ],
-  "thresholds": { "high": 85, "low": 75, "break": 70 },
+  "thresholds": {
+    "high": 85,
+    "low": 75,
+    "break": 70
+  },
   "ignorePatterns": [".skein", "docs", ".data", "reports"],
   "reporters": ["clear-text", "progress", "html"],
-  "htmlReporter": { "fileName": "reports/mutation/index.html" }
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "tsconfigFile": "stryker-skip-tsconfig-preprocessor.json",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "tempDirName": ".stryker-tmp"
 }
