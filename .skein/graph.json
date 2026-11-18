@@ -433,7 +433,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "HTTP server, views, boot and concurrency tests",
-    "version": 45,
+    "version": 46,
     "worktree": {
       "base_branch": "skein/server__integrate-base",
       "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
