@@ -34,7 +34,7 @@
       "goal": "Build Detailed Implementation Plan item 8 (src/config/load.ts and tests) exactly as specified."
     },
     "max_retries": 1,
-    "rejected_count": 0,
+    "rejected_count": 1,
     "removed": false,
     "result": null,
     "retry_at": null,
@@ -42,7 +42,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "Config loading and live readiness",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "branch": null,
@@ -164,15 +164,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "e8f74491b7b44128ab216c3ac53f52ea",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "4159e500a7d943b492edaa69bb73e551",
+      "claimed_at": "2026-11-18T19:32:08.605036+00:00",
+      "holder": "agent-2",
+      "last_heartbeat": "2026-11-18T19:32:08.605036+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-2"
     },
     "depends_on": [],
     "evidence": [],
@@ -192,11 +192,11 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "feat/mock-call-pilot",
       "branch": null,
       "path": null
     }
