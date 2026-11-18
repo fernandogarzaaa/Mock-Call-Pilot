@@ -419,22 +419,31 @@
     }
   },
   "server__integrate": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "511aa7d4a90d4758b75008e4d118feec",
+        "ended_at": "2026-11-18T19:41:34.281850+00:00",
+        "error": "",
+        "holder": "skein-auto-merge",
+        "outcome": "done",
+        "started_at": "2026-11-18T19:41:34.087835+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_code",
     "backend_config": {},
     "blast_radius": [],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "511aa7d4a90d4758b75008e4d118feec",
-      "base_branch": "skein/server__integrate__integrate-base",
-      "claim_token": "a74132cc4f684148835e4e0a48e1ed9b",
-      "claimed_at": "2026-11-18T19:41:34.087835+00:00",
-      "holder": "skein-auto-merge",
-      "last_heartbeat": "2026-11-18T19:41:34.087835+00:00",
-      "node_version": 1,
-      "ttl_seconds": 1800,
-      "worker_id": "skein-auto-merge"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "config",
@@ -443,8 +452,14 @@
       "stt",
       "storage"
     ],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "git merge 2270b8c51b0b328e216f6bf66c54fbc738b96230 0d750b4689d0a18df7a802404ea19c69b46cd92b afb2d1d6514188fe69d5d46bc9b3c0cd17e540a1 700bfa5f22bc5c56a3471516a6166c555f4c4ec2",
+        "exit_code": 0,
+        "output_ref": null
+      }
+    ],
+    "handoff_note": "Auto-merged ['ddf74d2c4e7e70da6fda1424483d428d51140b11', '2270b8c51b0b328e216f6bf66c54fbc738b96230', '0d750b4689d0a18df7a802404ea19c69b46cd92b', 'afb2d1d6514188fe69d5d46bc9b3c0cd17e540a1', '700bfa5f22bc5c56a3471516a6166c555f4c4ec2'] into skein/server__integrate-base.",
     "id": "server__integrate",
     "integration_for": "server",
     "intent": {
@@ -456,16 +471,21 @@
     "max_retries": 3,
     "rejected_count": 0,
     "removed": false,
-    "result": null,
+    "result": {
+      "base_commit": "ddf74d2c4e7e70da6fda1424483d428d51140b11",
+      "changed_files": [],
+      "commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
+      "diff_stats": {}
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "done",
     "title": "Integrate parents of server",
-    "version": 2,
+    "version": 3,
     "worktree": {
-      "base_branch": "skein/server__integrate__integrate-base",
-      "branch": null,
+      "base_branch": "ddf74d2c4e7e70da6fda1424483d428d51140b11",
+      "branch": "skein/server__integrate-base",
       "path": null
     }
   },
