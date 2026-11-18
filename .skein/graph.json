@@ -949,7 +949,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "Candidate call page",
-    "version": 12,
+    "version": 13,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
