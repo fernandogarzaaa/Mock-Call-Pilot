@@ -329,10 +329,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "3403837c1b986e939499270b28fc64930a47de02",
+        "result_commit": "0d750b4689d0a18df7a802404ea19c69b46cd92b",
+        "shipped_at": "2026-11-18T20:24:39.619157+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Claude and fake line pickers",
-    "version": 10,
+    "version": 11,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
