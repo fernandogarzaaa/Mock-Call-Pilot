@@ -239,6 +239,57 @@
       "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/deploy"
     }
   },
+  "kill-server": {
+    "attempts": [],
+    "attempts_used": 0,
+    "backend": "claude_build_pnpm",
+    "backend_config": {
+      "effort": "high",
+      "model": "sonnet"
+    },
+    "blast_radius": [
+      "src/server/**",
+      "mutation-briefs/server.md"
+    ],
+    "change_policy": "warn",
+    "claim": {
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
+    },
+    "depends_on": [],
+    "evidence": [],
+    "handoff_note": null,
+    "id": "kill-server",
+    "integration_for": null,
+    "intent": {
+      "completion": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run src/server && pnpm exec tsc --noEmit && pnpm exec biome check src/server && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+      "constraints": "Edit only files inside your blast radius. Never edit package.json, tsconfig.json, biome.json, vitest.config.ts, stryker configs, src/types/, config/, or docs/. No new dependencies. Relative imports end in .ts; types use 'import type'. Tests sit next to the code as *.test.ts and assert behaviour a caller can observe, never implementation details. Run 'pnpm install --frozen-lockfile' first, then 'pnpm exec vitest run <dir>', 'pnpm exec tsc --noEmit' and 'pnpm exec biome check <dir>' until all pass. Do not run git. Comments only for a non-obvious why.",
+      "context": "Spec: docs/designs/mock-call-pilot.md (Detailed Implementation Plan). The briefs come from a testteeth mutation run on the finished branch.",
+      "goal": "Work through mutation-briefs/server.md. For each entry, add or tighten a test so that change would fail it, or list it under '## Equivalent' in that brief with a reason. Update the brief to mark each entry done (killed or equivalent)."
+    },
+    "max_retries": 1,
+    "rejected_count": 0,
+    "removed": false,
+    "result": null,
+    "retry_at": null,
+    "retry_backoff_seconds": 60.0,
+    "shipped": {},
+    "status": "unclaimed",
+    "title": "Kill surviving mutants: server",
+    "version": 1,
+    "worktree": {
+      "base_branch": null,
+      "branch": null,
+      "path": null
+    }
+  },
   "picker": {
     "attempts": [
       {
