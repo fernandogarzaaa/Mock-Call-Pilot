@@ -145,11 +145,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Claude and fake line pickers",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
+      "branch": "skein/picker",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/picker"
     }
   },
   "script": {
