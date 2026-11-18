@@ -440,11 +440,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Kill surviving mutants: server",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "b998d7053e58397f485f820bacb623e316fafaea",
+      "branch": "skein/kill-server",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/kill-server"
     }
   },
   "kill-storage": {
