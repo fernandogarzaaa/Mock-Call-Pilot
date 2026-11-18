@@ -747,10 +747,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "627700cfe002b88c18fb32df671822053028e8b7",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "8cb21421a7135ef062fa23d2477720ea3e87a6f5",
+        "result_commit": "700bfa5f22bc5c56a3471516a6166c555f4c4ec2",
+        "shipped_at": "2026-11-18T20:24:39.842182+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "fs and GCS storage adapters",
-    "version": 15,
+    "version": 16,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
