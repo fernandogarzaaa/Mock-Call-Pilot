@@ -1,2 +1,101 @@
-// Filled by the web unit.
-export {};
+// Pure logic for the call page. No DOM, so vitest can run it under plain Node.
+
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+export const NAME_MAX = 80;
+export const LOST_MESSAGE = "Connection lost. Check your connection and press Done again";
+
+// Chrome and Safari record MP4 and its duration is readable; Chrome's WebM has none.
+const MIME_PREFERENCE = ["audio/mp4", "audio/webm;codecs=opus", "audio/ogg;codecs=opus"];
+
+const EXTENSIONS = { "audio/mp4": "mp4", "audio/webm": "webm", "audio/ogg": "ogg" };
+
+/** The first supported recording type, or null when the browser supports none of them. */
+export function pickMimeType(isTypeSupported) {
+  for (const type of MIME_PREFERENCE) {
+    if (isTypeSupported(type)) return type;
+  }
+  return null;
+}
+
+/** File extension for a recorded type; parameters such as ";codecs=opus" are ignored. */
+export function recordingExtension(mime) {
+  const base = String(mime).split(";")[0].trim().toLowerCase();
+  return EXTENSIONS[base] ?? "bin";
+}
+
+/** True for a name the server accepts: 1 to 80 characters after trimming. */
+export function validName(name) {
+  if (typeof name !== "string") return false;
+  const length = [...name.trim()].length;
+  return length >= 1 && length <= NAME_MAX;
+}
+
+export function tooLargeToUpload(bytes) {
+  return bytes > MAX_UPLOAD_BYTES;
+}
+
+// screen -> event type -> next screen. Guards for the events that need input are in nextScreen.
+const TRANSITIONS = {
+  name: { submit: "brief" },
+  brief: { accept: "mic" },
+  mic: { granted: "ready" },
+  ready: { start: "call" },
+  call: { end: "uploading" },
+  uploading: { uploaded: "done", failed: "retry" },
+  retry: { retry: "uploading" },
+  done: {},
+};
+
+/**
+ * The screen order is name, brief, mic, ready, call, uploading, done, plus uploading to retry.
+ * An event that does not apply, or whose guard fails, leaves the screen unchanged.
+ */
+export function nextScreen(screen, event) {
+  const type = event?.type;
+  const row = Object.hasOwn(TRANSITIONS, screen) ? TRANSITIONS[screen] : {};
+  const next = Object.hasOwn(row, type) ? row[type] : undefined;
+  if (next === undefined) return screen;
+  if (screen === "name" && !validName(event.name)) return screen;
+  if (screen === "brief" && event.noticeTicked !== true) return screen;
+  return next;
+}
+
+const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * POSTs the form, retrying only network errors and 5xx answers, waiting 1 s then 2 s.
+ * Returns the last response (a 5xx one if every attempt got a 5xx) or throws the last network error.
+ */
+export async function postWithRetry(fetchFn, url, form, attempts = 3, sleep = defaultSleep) {
+  for (let attempt = 1; ; attempt++) {
+    let response;
+    try {
+      response = await fetchFn(url, { method: "POST", body: form });
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      await sleep(1000 * 2 ** (attempt - 1));
+      continue;
+    }
+    if (response.status < 500 || attempt >= attempts) return response;
+    await sleep(1000 * 2 ** (attempt - 1));
+  }
+}
+
+/**
+ * What the page does after a failed turn request. Status 0 means the network failed.
+ * A gap or conflict is resent once with the same index; `resent` says that already happened.
+ */
+export function onTurnError(status, body, resent = false) {
+  if (status === 409 && body?.error === "ended") return { action: "upload" };
+  const retryable = body?.error === "gap" || body?.error === "conflict";
+  if (status === 409 && retryable && !resent) return { action: "resend" };
+  return { action: "lost", message: LOST_MESSAGE };
+}
+
+/** "m:ss", rounded up so the clock shows 0:00 only once time has run out. */
+export function formatRemaining(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
