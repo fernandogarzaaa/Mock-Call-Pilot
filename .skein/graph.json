@@ -387,11 +387,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Kill surviving mutants: script",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "50ad5ad4b273bedc81f123315a02a4b9a513ffd6",
+      "branch": "skein/kill-script",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/kill-script"
     }
   },
   "kill-server": {
