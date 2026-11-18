@@ -46,7 +46,7 @@ The approved design is [docs/designs/mock-call-pilot.md](docs/designs/mock-call-
 
 | Check | Result |
 |---|---|
-| Unit and integration tests | 355 passed, 16 files (`pnpm test`) |
+| Unit and integration tests | 356 passed, 16 files (`pnpm test`) |
 | Lint and types | `biome check .` clean; `tsc --noEmit` clean (TypeScript 7.0.2) |
 | Boot under Node 26 type stripping | Passes (spawns `src/server/main.ts`) |
 | Docker image | Builds; container answers `/healthz` and `/call` with 200 |
@@ -57,8 +57,9 @@ The approved design is [docs/designs/mock-call-pilot.md](docs/designs/mock-call-
 ## Not verified yet
 
 - **Real speech-to-text and Claude.** `pnpm dev:real` was not run: this machine has no `.env`
-  with `ANTHROPIC_API_KEY` and `ELEVENLABS_API_KEY`. The request shapes were checked against
-  the Anthropic SDK reference only.
+  with `ANTHROPIC_API_KEY` and `ELEVENLABS_API_KEY`. The Claude request is type-checked against
+  `@anthropic-ai/sdk` 1.10.0's own parameter types, but no live call has been made. The
+  ElevenLabs request is checked only by stubbed tests.
 - **Deployed run.** `deploy.sh` was syntax-checked only. Nothing was deployed, and the
   10-session `load-test --real` run and latency targets (median under 3 s, 95th percentile
   under 5 s) are untested.
@@ -66,7 +67,9 @@ The approved design is [docs/designs/mock-call-pilot.md](docs/designs/mock-call-
 - **Surviving mutants were not killed.** testteeth left 175 mutants surviving and 90 not covered.
   The follow-up round that should have killed them was run as skein agents, and every agent
   stopped immediately with "This request would exceed your account's monthly spend limit". No
-  test changed. The per-unit briefs are in `mutation-briefs/`, ready to rerun.
+  test changed. The main thread killed one survivor by hand: the session-id pattern's `^`
+  anchor, which guards storage paths. The per-unit briefs are in `mutation-briefs/`, ready to
+  rerun.
   - Justified as is: `src/server/main.ts` (71 not covered). It runs only in the boot test's
     child process, which mutation tools cannot measure.
   - Justified as is: `src/script/fixture.ts` (27). It is test data, not code under test.
@@ -135,5 +138,9 @@ cannot drive those browsers.
   pnpm hides it from discovery. Stryker's tsconfig step is skipped, because TypeScript 7 removed
   an API it calls. `stryker.testteeth.json` adds `vitest.related: false` for testteeth.
 - **The demo banner is yellow, not red.** The text matches the design.
+- **Local default port is 3000.** On this machine `127.0.0.1:8080` belongs to the Axiom proxy.
+  Cloud Run still sets `PORT` itself.
+- **The Claude client is typed against the SDK.** `main.ts` passes the real client without a
+  cast.
 
 The design doc was updated for each of these.
