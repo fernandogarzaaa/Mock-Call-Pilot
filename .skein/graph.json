@@ -411,11 +411,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "HTTP server, views, boot and concurrency tests",
-    "version": 3,
+    "version": 4,
     "worktree": {
       "base_branch": "skein/server__integrate-base",
-      "branch": null,
-      "path": null
+      "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
+      "branch": "skein/server",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/server"
     }
   },
   "server__integrate": {
