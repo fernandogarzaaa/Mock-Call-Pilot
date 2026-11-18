@@ -59,9 +59,14 @@ async function main(): Promise<void> {
     transcriber: buildTranscriber(env),
     picker: await buildPicker(env, config),
   });
-  const server = serve({ fetch: app.fetch, port: Number(env.PORT ?? 8080) }, (info) => {
-    console.log(`listening on ${info.port}`);
-  });
+  // Bind IPv4 explicitly: with the default dual-stack "::" bind, a port 0 the kernel picks can
+  // already be held on 127.0.0.1 by another process, and IPv4 clients then reach that process.
+  const server = serve(
+    { fetch: app.fetch, port: Number(env.PORT ?? 8080), hostname: "0.0.0.0" },
+    (info) => {
+      console.log(`listening on ${info.port}`);
+    },
+  );
   process.on("SIGTERM", () => server.close(() => process.exit(0)));
 }
 
