@@ -1151,10 +1151,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "fbd885d2e04e7711e890d2ae46ee3d80980e46bd",
+        "result_commit": "a0c33b66b1b0ccc2fae04151aa16ae7a0496a559",
+        "shipped_at": "2026-11-18T20:24:40.351519+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Candidate call page",
-    "version": 15,
+    "version": 16,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
