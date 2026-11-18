@@ -245,3 +245,4 @@
 {"event_id": "08705123c5184432906b7242e90fccca", "schema_version": 1, "seq": 245, "timestamp": "2026-11-18T20:38:11.370767+00:00", "actor": "inan", "type": "node_removed", "node_id": "kill-server", "payload": {}}
 {"event_id": "0b86fb843c8549c09ec884115821ac31", "schema_version": 1, "seq": 246, "timestamp": "2026-11-18T20:38:12.209792+00:00", "actor": "inan", "type": "node_removed", "node_id": "kill-storage", "payload": {}}
 {"event_id": "24e7dd1ff56e4f9a85036e0c1ac48ff2", "schema_version": 1, "seq": 247, "timestamp": "2026-11-18T20:38:13.018970+00:00", "actor": "inan", "type": "node_removed", "node_id": "kill-picker", "payload": {}}
+{"event_id": "f9bf30e2559f43e1a0e578518a8db4f4", "schema_version": 1, "seq": 248, "timestamp": "2026-11-18T20:38:13.801904+00:00", "actor": "inan", "type": "node_removed", "node_id": "kill-script", "payload": {}}
