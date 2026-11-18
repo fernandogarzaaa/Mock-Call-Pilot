@@ -875,9 +875,9 @@
     "shipped": {},
     "status": "unclaimed",
     "title": "Full suite, lint, types, mutation gate",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "skein/verify__integrate-base",
       "branch": null,
       "path": null
     }
