@@ -17,7 +17,7 @@
       "claim_token": "c836e32c430f44b3a3434c192b84b464",
       "claimed_at": "2026-11-18T19:32:08.157498+00:00",
       "holder": "agent-4",
-      "last_heartbeat": "2026-11-18T19:32:08.157498+00:00",
+      "last_heartbeat": "2026-11-18T19:33:09.283696+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-4"
@@ -40,9 +40,9 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "in_progress",
     "title": "Config loading and live readiness",
-    "version": 4,
+    "version": 6,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
@@ -120,7 +120,7 @@
       "claim_token": "3550ded4c9394ebba4723c4ccbfea511",
       "claimed_at": "2026-11-18T19:32:08.436236+00:00",
       "holder": "agent-5",
-      "last_heartbeat": "2026-11-18T19:32:08.436236+00:00",
+      "last_heartbeat": "2026-11-18T19:33:09.616804+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-5"
@@ -143,9 +143,9 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "in_progress",
     "title": "Claude and fake line pickers",
-    "version": 4,
+    "version": 6,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
@@ -171,7 +171,7 @@
       "claim_token": "4159e500a7d943b492edaa69bb73e551",
       "claimed_at": "2026-11-18T19:32:08.605036+00:00",
       "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T19:32:08.605036+00:00",
+      "last_heartbeat": "2026-11-18T19:33:09.837984+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-2"
@@ -194,9 +194,9 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "in_progress",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 3,
+    "version": 5,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
@@ -278,7 +278,7 @@
       "claim_token": "5c832d9d9a814657ae2f1adfe1dcdd79",
       "claimed_at": "2026-11-18T19:32:09.280139+00:00",
       "holder": "agent-1",
-      "last_heartbeat": "2026-11-18T19:32:09.280139+00:00",
+      "last_heartbeat": "2026-11-18T19:33:10.455087+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-1"
@@ -301,9 +301,9 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "in_progress",
     "title": "fs and GCS storage adapters",
-    "version": 3,
+    "version": 5,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
@@ -312,7 +312,16 @@
     }
   },
   "stt": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "fa77fcca6a284d5293464ba781c6a317",
+        "ended_at": "2026-11-18T19:33:25.977550+00:00",
+        "error": "",
+        "holder": "agent-3",
+        "outcome": "done",
+        "started_at": "2026-11-18T19:32:10.431440+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_build_pnpm",
     "backend_config": {
@@ -324,19 +333,32 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "fa77fcca6a284d5293464ba781c6a317",
-      "base_branch": "feat/mock-call-pilot",
-      "claim_token": "de69a5bc26ae45fc86c070925f6bfdc5",
-      "claimed_at": "2026-11-18T19:32:10.431440+00:00",
-      "holder": "agent-3",
-      "last_heartbeat": "2026-11-18T19:32:10.431440+00:00",
-      "node_version": 1,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-3"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run src/stt && pnpm exec tsc --noEmit && pnpm exec biome check src/stt && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+        "duration_ms": 1418,
+        "exit_code": 0,
+        "nonce_ok": true,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/stt_20261118T193324436071_0.log"
+      },
+      {
+        "command": "<adapter:claude_build_pnpm>",
+        "exit_code": 0,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/stt_20261118T193325855553_adapter.log"
+      }
+    ],
+    "handoff_note": "Done. Verification passed. Last output: I didn't run testteeth or the Axiom session-start steps; this was a short headless node, and the supervisor's check doesn't need them.",
     "id": "stt",
     "integration_for": null,
     "intent": {
@@ -348,13 +370,41 @@
     "max_retries": 1,
     "rejected_count": 0,
     "removed": false,
-    "result": null,
+    "result": {
+      "attempt_id": "fa77fcca6a284d5293464ba781c6a317",
+      "base_commit": "f35114997fc9d404e62f9d200916ddb90a9755d4",
+      "changed_files": [
+        "src/stt/fake.test.ts",
+        "src/stt/fake.ts",
+        "src/stt/scribe.test.ts",
+        "src/stt/scribe.ts"
+      ],
+      "commit": "afb2d1d6514188fe69d5d46bc9b3c0cd17e540a1",
+      "diff_stats": {
+        "src/stt/fake.test.ts": {
+          "added": 37,
+          "deleted": 0
+        },
+        "src/stt/fake.ts": {
+          "added": 17,
+          "deleted": 0
+        },
+        "src/stt/scribe.test.ts": {
+          "added": 153,
+          "deleted": 0
+        },
+        "src/stt/scribe.ts": {
+          "added": 49,
+          "deleted": 0
+        }
+      }
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "done",
     "title": "Scribe and fake transcribers",
-    "version": 3,
+    "version": 6,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "f35114997fc9d404e62f9d200916ddb90a9755d4",
