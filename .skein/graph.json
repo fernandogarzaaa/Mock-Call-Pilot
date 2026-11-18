@@ -87,10 +87,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
+        "diverged": false,
+        "forced": false,
+        "merge_commit": "4543f2e6f6076fe986a3eea1a330341bf21cd635",
+        "result_commit": "ddf74d2c4e7e70da6fda1424483d428d51140b11",
+        "shipped_at": "2026-11-18T20:24:39.502308+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Config loading and live readiness",
-    "version": 15,
+    "version": 16,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
