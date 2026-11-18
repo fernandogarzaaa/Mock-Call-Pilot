@@ -891,6 +891,14 @@
         "holder": "agent-2",
         "outcome": "failed",
         "started_at": "2026-11-18T20:09:06.960029+00:00"
+      },
+      {
+        "attempt_id": "a505585a6dce4317b84cca4e80502b9b",
+        "ended_at": "2026-11-18T20:18:14.917173+00:00",
+        "error": "",
+        "holder": "agent-2",
+        "outcome": "done",
+        "started_at": "2026-11-18T20:17:32.486111+00:00"
       }
     ],
     "attempts_used": 0,
@@ -904,15 +912,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "a505585a6dce4317b84cca4e80502b9b",
-      "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
-      "claim_token": "bc855df20a694592905f22ba91d75040",
-      "claimed_at": "2026-11-18T20:17:32.486111+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T20:17:32.486111+00:00",
-      "node_version": 11,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "server"
@@ -920,18 +928,18 @@
     "evidence": [
       {
         "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run public && pnpm exec biome check public && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
-        "duration_ms": 3483,
-        "exit_code": 1,
-        "nonce_ok": false,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201246172632_0.log"
+        "duration_ms": 1021,
+        "exit_code": 0,
+        "nonce_ok": true,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201813826583_0.log"
       },
       {
         "command": "<adapter:claude_build_pnpm>",
         "exit_code": 0,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201249656878_adapter.log"
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/web_20261118T201814848758_adapter.log"
       }
     ],
-    "handoff_note": "completion command failed (adapter exit=0); see evidence",
+    "handoff_note": "Done. Verification passed. Last output: Next: run the full completion check once in a shell that allows `pnpm install`.",
     "id": "web",
     "integration_for": null,
     "intent": {
@@ -943,13 +951,41 @@
     "max_retries": 1,
     "rejected_count": 0,
     "removed": false,
-    "result": null,
+    "result": {
+      "attempt_id": "a505585a6dce4317b84cca4e80502b9b",
+      "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+      "changed_files": [
+        "public/call-core.js",
+        "public/call.css",
+        "public/call.js",
+        "public/call-core.test.js"
+      ],
+      "commit": "a0c33b66b1b0ccc2fae04151aa16ae7a0496a559",
+      "diff_stats": {
+        "public/call-core.js": {
+          "added": 101,
+          "deleted": 2
+        },
+        "public/call-core.test.js": {
+          "added": 275,
+          "deleted": 0
+        },
+        "public/call.css": {
+          "added": 271,
+          "deleted": 1
+        },
+        "public/call.js": {
+          "added": 508,
+          "deleted": 1
+        }
+      }
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "done",
     "title": "Candidate call page",
-    "version": 13,
+    "version": 15,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
