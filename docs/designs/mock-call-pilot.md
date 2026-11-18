@@ -577,10 +577,10 @@ Everything that two or more units must agree on is fixed in the scaffold, before
 starts. Units never edit `package.json`, `pnpm-workspace.yaml`, `tsconfig.json`, `src/types/`
 or `config/`.
 
-The build runs in waves. The main thread adds a wave's nodes to skein only after the previous
-wave is shipped onto the feature branch (`skein ship --all`). Each new worktree therefore
-branches from a feature branch that already holds its dependencies' code. The main thread checks
-this with `git log` before starting each wave. The waves are:
+The build runs in waves set by the `depends on` column. skein bases a dependent node's
+worktree on its dependency's result commit (one dependency) or on an integration branch of all
+its dependencies (several), so it contains its dependencies' code. This was checked in skein's
+`worktree.py` (`base_branch_for`) on 2026-11-19. The waves are:
 
 1.  config, script, picker, stt, storage
 2.  server
