@@ -196,11 +196,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
+      "branch": "skein/script",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/script"
     }
   },
   "server": {
