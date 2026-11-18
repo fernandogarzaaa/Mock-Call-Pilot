@@ -875,11 +875,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Full suite, lint, types, mutation gate",
-    "version": 3,
+    "version": 4,
     "worktree": {
       "base_branch": "skein/verify__integrate-base",
-      "branch": null,
-      "path": null
+      "base_commit": "2bbf731123eacb1d6c18450cd03e1eadee6d6a0d",
+      "branch": "skein/verify",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/verify"
     }
   },
   "verify__integrate": {
