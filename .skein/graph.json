@@ -276,7 +276,7 @@
       "goal": "Work through mutation-briefs/configstt.md. For each entry, add or tighten a test so that change would fail it, or list it under '## Equivalent' in that brief with a reason. Update the brief to mark each entry done (killed or equivalent)."
     },
     "max_retries": 1,
-    "rejected_count": 1,
+    "rejected_count": 2,
     "removed": false,
     "result": null,
     "retry_at": null,
@@ -284,11 +284,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Kill surviving mutants: configstt",
-    "version": 3,
+    "version": 5,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "308492b5761843bc7618d9d12c1c391ac1bc3b60",
+      "branch": "skein/kill-configstt",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/kill-configstt"
     }
   },
   "kill-picker": {
