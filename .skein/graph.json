@@ -137,7 +137,7 @@
       "goal": "Build Detailed Implementation Plan item 10 (src/picker/claude.ts, fake.ts, prompt.ts and tests) exactly as specified. Tests stub the Anthropic client; never call the real API."
     },
     "max_retries": 1,
-    "rejected_count": 0,
+    "rejected_count": 1,
     "removed": false,
     "result": null,
     "retry_at": null,
@@ -145,11 +145,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Claude and fake line pickers",
-    "version": 2,
+    "version": 4,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
+      "branch": "skein/picker",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/picker"
     }
   },
   "script": {
@@ -195,11 +196,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
+      "branch": "skein/script",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/script"
     }
   },
   "server": {
@@ -271,15 +273,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "d235cf86677146198a26baa7e763b986",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "5c832d9d9a814657ae2f1adfe1dcdd79",
+      "claimed_at": "2026-11-18T19:32:09.280139+00:00",
+      "holder": "agent-1",
+      "last_heartbeat": "2026-11-18T19:32:09.280139+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-1"
     },
     "depends_on": [],
     "evidence": [],
@@ -299,13 +301,14 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "fs and GCS storage adapters",
-    "version": 1,
+    "version": 3,
     "worktree": {
-      "base_branch": null,
-      "branch": null,
-      "path": null
+      "base_branch": "feat/mock-call-pilot",
+      "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
+      "branch": "skein/storage",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/storage"
     }
   },
   "stt": {
@@ -321,15 +324,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "fa77fcca6a284d5293464ba781c6a317",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "de69a5bc26ae45fc86c070925f6bfdc5",
+      "claimed_at": "2026-11-18T19:32:10.431440+00:00",
+      "holder": "agent-3",
+      "last_heartbeat": "2026-11-18T19:32:10.431440+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-3"
     },
     "depends_on": [],
     "evidence": [],
@@ -349,11 +352,11 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Scribe and fake transcribers",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "feat/mock-call-pilot",
       "branch": null,
       "path": null
     }
