@@ -440,10 +440,20 @@
     },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
-    "shipped": {},
+    "shipped": {
+      "feat/mock-call-pilot": {
+        "base_commit": "3836f92fd737244e169636711b59ee1834feeac3",
+        "diverged": true,
+        "forced": true,
+        "merge_commit": "28d89df697c9428bf9401e29fb6ee42b6c040821",
+        "result_commit": "2270b8c51b0b328e216f6bf66c54fbc738b96230",
+        "shipped_at": "2026-11-18T20:24:39.728377+00:00",
+        "target_branch": "feat/mock-call-pilot"
+      }
+    },
     "status": "done",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 22,
+    "version": 23,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
