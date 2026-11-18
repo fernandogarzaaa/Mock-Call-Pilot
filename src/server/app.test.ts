@@ -854,6 +854,17 @@ describe("the recording page", () => {
 });
 
 describe("ids and routes", () => {
+  it("answers 404, not a storage error, when a real id is prefixed with a path", async () => {
+    const h = await harness();
+    const id = await start(h);
+    for (const prefix of ["../", "x/../", "sessions/../"]) {
+      const encoded = encodeURIComponent(`${prefix}${id}`);
+      for (const path of [`/r/${encoded}`, `/r/${encoded}/audio`]) {
+        expect((await h.app.request(path)).status, path).toBe(404);
+      }
+    }
+  });
+
   it("answers 404 for an id that is not 22 URL-safe characters", async () => {
     const h = await harness();
     const bad = [

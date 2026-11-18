@@ -5,6 +5,7 @@ import { ClaudePicker, type PickerClient } from "./claude.ts";
 
 type Create = PickerClient["beta"]["messages"]["create"];
 type Response = Awaited<ReturnType<Create>>;
+type Params = Record<string, unknown>;
 
 const SYSTEM = "SYSTEM PROMPT TEXT";
 const input: PickInput = {
@@ -23,8 +24,9 @@ function stub(respond: (params: Record<string, unknown>) => Promise<Response>) {
     beta: {
       messages: {
         create: (params, options) => {
-          calls.push({ params, options });
-          return respond(params);
+          const recorded = params as unknown as Params;
+          calls.push({ params: recorded, options });
+          return respond(recorded);
         },
       },
     },

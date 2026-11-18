@@ -10,7 +10,7 @@ except to fix a real bug a new test exposes; describe any such fix under '## Bug
 - `src/server/app.ts:28` in `buildApp`, survived: StringLiteral: `"Not found"` -> `""`
 - `src/server/app.ts:28` in `buildApp`, survived: StringLiteral: `"There is nothing at this address."` -> `""`
 - `src/server/app.ts:31` in `buildApp`, survived: CallExpression: `console.error(error);` -> `;`
-- `src/server/routes.ts:39` in `<module>`, survived: Regex: `/^[A-Za-z0-9_-]{22}$/` -> `/[A-Za-z0-9_-]{22}$/`
+- `src/server/routes.ts:39` in `<module>`, survived: Regex: `/^[A-Za-z0-9_-]{22}$/` -> `/[A-Za-z0-9_-]{22}$/` **KILLED** (app.test.ts, "answers 404, not a storage error, when a real id is prefixed with a path")
 - `src/server/routes.ts:39` in `<module>`, survived: Regex: `/^[A-Za-z0-9_-]{22}$/` -> `/^[A-Za-z0-9_-]{22}/`
 - `src/server/routes.ts:55` in `codeMatches`, survived: ConditionalExpression: `expected === ""` -> `false`
 - `src/server/routes.ts:55` in `codeMatches`, survived: StringLiteral: `""` -> `"Stryker was here!"`

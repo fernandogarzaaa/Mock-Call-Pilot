@@ -43,7 +43,7 @@ async function buildPicker(env: Env, config: ResolvedConfig): Promise<LinePicker
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey: requireEnv(env, "ANTHROPIC_API_KEY") });
   return new ClaudePicker(
-    client as unknown as PickerClient,
+    client,
     env.PICKER_MODEL || "claude-opus-5-5",
     env.PICKER_EFFORT || "low",
     systemPrompt(config.script),

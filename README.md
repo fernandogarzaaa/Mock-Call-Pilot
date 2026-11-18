@@ -21,13 +21,13 @@ cp .env.example .env
 pnpm dev
 ```
 
-Open <http://localhost:8080/call?code=demo>. `pnpm dev` uses fake speech-to-text and a fake
+Open <http://localhost:3000/call?code=demo>. `pnpm dev` uses fake speech-to-text and a fake
 prospect, so it needs no API keys. To use the real ElevenLabs and Claude services on placeholder
 content, set `ANTHROPIC_API_KEY` and `ELEVENLABS_API_KEY` in `.env` and run `pnpm dev:real`.
 
 ## Modes
 
-- `MODE=demo` runs on placeholder content and shows a red demo banner on every page.
+- `MODE=demo` runs on placeholder content and shows a demo banner on every page.
 - `MODE=live` is for real candidates. The server refuses to start, and lists every reason, while
   any value in `config/pilot.json` `gaps` or the script persona is unset, any line is not
   approved, or a fake adapter is selected.

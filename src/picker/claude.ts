@@ -1,3 +1,4 @@
+import type Anthropic from "@anthropic-ai/sdk";
 import type { LinePicker, PickInput } from "../types/index.ts";
 import { PickerError } from "../types/index.ts";
 import { userMessage } from "./prompt.ts";
@@ -19,10 +20,13 @@ interface RequestOptions {
  * The slice of the Anthropic SDK client the picker uses. Declared here so tests stub it
  * without the SDK; the real client satisfies it structurally.
  */
+type CreateParams = Anthropic.Beta.MessageCreateParamsNonStreaming;
+type Effort = NonNullable<NonNullable<CreateParams["output_config"]>["effort"]>;
+
 export interface PickerClient {
   beta: {
     messages: {
-      create(params: Record<string, unknown>, options: RequestOptions): Promise<PickerResponse>;
+      create(params: CreateParams, options: RequestOptions): Promise<PickerResponse>;
     };
   };
 }
@@ -70,7 +74,7 @@ export class ClaudePicker implements LinePicker {
           ],
           messages: [{ role: "user", content: userMessage(input) }],
           output_config: {
-            effort: this.#effort,
+            effort: this.#effort as Effort,
             format: {
               type: "json_schema",
               schema: {
