@@ -371,6 +371,14 @@
         "holder": "agent-2",
         "outcome": "failed",
         "started_at": "2026-11-18T19:41:34.313408+00:00"
+      },
+      {
+        "attempt_id": "12e5a56595d44451836216e94f408bff",
+        "ended_at": "2026-11-18T20:03:31.441465+00:00",
+        "error": "",
+        "holder": "agent-2",
+        "outcome": "done",
+        "started_at": "2026-11-18T20:02:24.861300+00:00"
       }
     ],
     "attempts_used": 0,
@@ -384,15 +392,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "12e5a56595d44451836216e94f408bff",
-      "base_branch": "skein/server__integrate-base",
-      "claim_token": "8ceb8d56abc044b9a77893e2b5939a7a",
-      "claimed_at": "2026-11-18T20:02:24.861300+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T20:02:24.861300+00:00",
-      "node_version": 44,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "config",
@@ -404,18 +412,18 @@
     "evidence": [
       {
         "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run src/server && pnpm exec tsc --noEmit && pnpm exec biome check src/server && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
-        "duration_ms": 3279,
-        "exit_code": 1,
-        "nonce_ok": false,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200115527522_0.log"
+        "duration_ms": 1860,
+        "exit_code": 0,
+        "nonce_ok": true,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200329492463_0.log"
       },
       {
         "command": "<adapter:claude_build_pnpm>",
         "exit_code": 0,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200118807845_adapter.log"
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/server_20261118T200331353760_adapter.log"
       }
     ],
-    "handoff_note": "completion command failed (adapter exit=0); see evidence",
+    "handoff_note": "Done. Verification passed. Last output: Next: run the completion check once in a shell that allows `pnpm install` and binding a port.",
     "id": "server",
     "integration_for": null,
     "intent": {
@@ -427,13 +435,51 @@
     "max_retries": 1,
     "rejected_count": 0,
     "removed": false,
-    "result": null,
+    "result": {
+      "attempt_id": "12e5a56595d44451836216e94f408bff",
+      "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
+      "changed_files": [
+        "src/server/app.test.ts",
+        "src/server/app.ts",
+        "src/server/boot.test.ts",
+        "src/server/main.ts",
+        "src/server/routes.ts",
+        "src/server/views.ts"
+      ],
+      "commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+      "diff_stats": {
+        "src/server/app.test.ts": {
+          "added": 1028,
+          "deleted": 0
+        },
+        "src/server/app.ts": {
+          "added": 35,
+          "deleted": 0
+        },
+        "src/server/boot.test.ts": {
+          "added": 142,
+          "deleted": 0
+        },
+        "src/server/main.ts": {
+          "added": 75,
+          "deleted": 0
+        },
+        "src/server/routes.ts": {
+          "added": 361,
+          "deleted": 0
+        },
+        "src/server/views.ts": {
+          "added": 96,
+          "deleted": 0
+        }
+      }
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "done",
     "title": "HTTP server, views, boot and concurrency tests",
-    "version": 46,
+    "version": 49,
     "worktree": {
       "base_branch": "skein/server__integrate-base",
       "base_commit": "5743a09d0d2515d673404c75300a5a7a8cc3206c",
