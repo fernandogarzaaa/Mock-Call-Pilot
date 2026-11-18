@@ -304,5 +304,57 @@
       "branch": null,
       "path": null
     }
+  },
+  "web": {
+    "attempts": [],
+    "attempts_used": 0,
+    "backend": "claude_build_pnpm",
+    "backend_config": {
+      "effort": "high",
+      "model": "sonnet"
+    },
+    "blast_radius": [
+      "public/**"
+    ],
+    "change_policy": "warn",
+    "claim": {
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
+    },
+    "depends_on": [
+      "server"
+    ],
+    "evidence": [],
+    "handoff_note": null,
+    "id": "web",
+    "integration_for": null,
+    "intent": {
+      "completion": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run public && pnpm exec biome check public && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+      "constraints": "Edit only files inside your blast radius. Never edit package.json, pnpm-workspace.yaml, tsconfig.json, biome.json, vitest.config.ts, stryker.config.json, src/types/, config/, or docs/. No new dependencies. Node 26 runs .ts directly: every relative import ends in .ts, types are imported with 'import type', no enums, namespaces, parameter properties or decorators. Tests sit next to the code as *.test.ts and assert behaviour a caller can observe. Run 'pnpm install --frozen-lockfile' first, then use 'pnpm exec vitest run <dir>', 'pnpm exec tsc --noEmit' and 'pnpm exec biome check <dir>' until all pass (use 'pnpm exec biome check --write <dir>' to format). Do not run git; skein commits for you. Comments only for a non-obvious why. Out of scope (do not build): AI scoring, voice AI, booking, retry or restart of a call, dashboards, the under-10 fleet branch, voicemail, follow-up email, other script paths. Never invent prospect wording; placeholders stay placeholders.",
+      "context": "Spec: docs/designs/mock-call-pilot.md. Read the whole Technical Plan and the Detailed Implementation Plan item named in the goal before writing code. Shared types are fixed in src/types/index.ts and seed config in config/; read both.",
+      "goal": "Build Detailed Implementation Plan item 14 (public/call-core.js with call-core.test.js, public/call.js, public/call.css) exactly as specified. Chrome records audio/mp4, so do not vendor fix-webm-duration. Read src/server/views.ts and routes.ts for the page shell and API contracts."
+    },
+    "max_retries": 1,
+    "rejected_count": 0,
+    "removed": false,
+    "result": null,
+    "retry_at": null,
+    "retry_backoff_seconds": 60.0,
+    "shipped": {},
+    "status": "unclaimed",
+    "title": "Candidate call page",
+    "version": 1,
+    "worktree": {
+      "base_branch": null,
+      "branch": null,
+      "path": null
+    }
   }
 }
