@@ -17,7 +17,7 @@
       "claim_token": "c836e32c430f44b3a3434c192b84b464",
       "claimed_at": "2026-11-18T19:32:08.157498+00:00",
       "holder": "agent-4",
-      "last_heartbeat": "2026-11-18T19:33:09.283696+00:00",
+      "last_heartbeat": "2026-11-18T19:34:39.309312+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-4"
@@ -42,7 +42,7 @@
     "shipped": {},
     "status": "in_progress",
     "title": "Config loading and live readiness",
-    "version": 6,
+    "version": 9,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
@@ -103,7 +103,16 @@
     }
   },
   "picker": {
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "f39e953bccd84dbc86913914b3dbdd12",
+        "ended_at": "2026-11-18T19:35:07.230968+00:00",
+        "error": "",
+        "holder": "agent-5",
+        "outcome": "done",
+        "started_at": "2026-11-18T19:32:08.436236+00:00"
+      }
+    ],
     "attempts_used": 0,
     "backend": "claude_build_pnpm",
     "backend_config": {
@@ -115,19 +124,32 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "f39e953bccd84dbc86913914b3dbdd12",
-      "base_branch": "feat/mock-call-pilot",
-      "claim_token": "3550ded4c9394ebba4723c4ccbfea511",
-      "claimed_at": "2026-11-18T19:32:08.436236+00:00",
-      "holder": "agent-5",
-      "last_heartbeat": "2026-11-18T19:33:09.616804+00:00",
-      "node_version": 1,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-5"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [],
-    "evidence": [],
-    "handoff_note": null,
+    "evidence": [
+      {
+        "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run src/picker && pnpm exec tsc --noEmit && pnpm exec biome check src/picker && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
+        "duration_ms": 4879,
+        "exit_code": 0,
+        "nonce_ok": true,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/picker_20261118T193502263305_0.log"
+      },
+      {
+        "command": "<adapter:claude_build_pnpm>",
+        "exit_code": 0,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/picker_20261118T193507144322_adapter.log"
+      }
+    ],
+    "handoff_note": "Done. Verification passed. Last output: Next: run `pnpm install --frozen-lockfile` without the sandbox, then `pnpm exec vitest run src/picker && pnpm exec tsc --noEmit && pnpm exec biome check --write src/picker`.",
     "id": "picker",
     "integration_for": null,
     "intent": {
@@ -139,13 +161,51 @@
     "max_retries": 1,
     "rejected_count": 1,
     "removed": false,
-    "result": null,
+    "result": {
+      "attempt_id": "f39e953bccd84dbc86913914b3dbdd12",
+      "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
+      "changed_files": [
+        "src/picker/claude.test.ts",
+        "src/picker/claude.ts",
+        "src/picker/fake.test.ts",
+        "src/picker/fake.ts",
+        "src/picker/prompt.test.ts",
+        "src/picker/prompt.ts"
+      ],
+      "commit": "0d750b4689d0a18df7a802404ea19c69b46cd92b",
+      "diff_stats": {
+        "src/picker/claude.test.ts": {
+          "added": 203,
+          "deleted": 0
+        },
+        "src/picker/claude.ts": {
+          "added": 110,
+          "deleted": 0
+        },
+        "src/picker/fake.test.ts": {
+          "added": 114,
+          "deleted": 0
+        },
+        "src/picker/fake.ts": {
+          "added": 26,
+          "deleted": 0
+        },
+        "src/picker/prompt.test.ts": {
+          "added": 104,
+          "deleted": 0
+        },
+        "src/picker/prompt.ts": {
+          "added": 46,
+          "deleted": 0
+        }
+      }
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "in_progress",
+    "status": "done",
     "title": "Claude and fake line pickers",
-    "version": 6,
+    "version": 10,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
@@ -171,7 +231,7 @@
       "claim_token": "4159e500a7d943b492edaa69bb73e551",
       "claimed_at": "2026-11-18T19:32:08.605036+00:00",
       "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T19:33:09.837984+00:00",
+      "last_heartbeat": "2026-11-18T19:34:39.864259+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-2"
@@ -196,7 +256,7 @@
     "shipped": {},
     "status": "in_progress",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 5,
+    "version": 8,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
@@ -278,7 +338,7 @@
       "claim_token": "5c832d9d9a814657ae2f1adfe1dcdd79",
       "claimed_at": "2026-11-18T19:32:09.280139+00:00",
       "holder": "agent-1",
-      "last_heartbeat": "2026-11-18T19:33:10.455087+00:00",
+      "last_heartbeat": "2026-11-18T19:34:40.507593+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-1"
@@ -303,7 +363,7 @@
     "shipped": {},
     "status": "in_progress",
     "title": "fs and GCS storage adapters",
-    "version": 5,
+    "version": 8,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
