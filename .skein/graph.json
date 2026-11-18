@@ -64,7 +64,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "Config loading and live readiness",
-    "version": 12,
+    "version": 13,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
