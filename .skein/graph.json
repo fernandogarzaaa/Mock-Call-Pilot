@@ -137,7 +137,7 @@
       "goal": "Build Detailed Implementation Plan item 10 (src/picker/claude.ts, fake.ts, prompt.ts and tests) exactly as specified. Tests stub the Anthropic client; never call the real API."
     },
     "max_retries": 1,
-    "rejected_count": 0,
+    "rejected_count": 1,
     "removed": false,
     "result": null,
     "retry_at": null,
@@ -145,7 +145,7 @@
     "shipped": {},
     "status": "claimed",
     "title": "Claude and fake line pickers",
-    "version": 3,
+    "version": 4,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6d3cc12708667cf5d213dfdabe359167765b4bab",
@@ -303,11 +303,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "fs and GCS storage adapters",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
+      "branch": "skein/storage",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/storage"
     }
   },
   "stt": {
