@@ -4,3 +4,6 @@ node_modules/
 .env
 reports/
 .stryker-tmp/
+# skein: agent worktrees and evidence logs are local scratch
+.skein/worktrees/
+.skein/evidence/
