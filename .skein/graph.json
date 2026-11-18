@@ -881,11 +881,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Candidate call page",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
-      "branch": null,
-      "path": null
+      "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+      "branch": "skein/web",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/web"
     }
   }
 }
