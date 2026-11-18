@@ -354,11 +354,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Scribe and fake transcribers",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "f35114997fc9d404e62f9d200916ddb90a9755d4",
+      "branch": "skein/stt",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/stt"
     }
   },
   "verify": {
