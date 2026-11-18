@@ -1,7 +1,7 @@
 # Mock-call pilot: Can-Am Telematics prospecting
 
 *   **Author:** Fernando Garza (Rhino Squad)
-*   **Status:** Proposed (review complete, awaiting approval)
+*   **Status:** Approved (2026-11-19, Fernando; placeholder prospect lines only)
 *   **Date:** 2026-11-19
 *   **Sources:** [source_brief.md](source_brief.md) (verbatim brief),
     [concepts_brief.md](concepts_brief.md), [client_and_role_sources.md](client_and_role_sources.md)
@@ -776,7 +776,8 @@ because `erasableSyntaxOnly` rejects those.
     1.  `FROM node:26-slim`, `WORKDIR /app`, `ENV NODE_ENV=production`.
     2.  `RUN npm install -g pnpm@12.15.0`. Node 26 images ship no corepack (checked on Node
         26.13.0).
-    3.  `COPY package.json pnpm-lock.yaml ./`, then `RUN pnpm install --prod --frozen-lockfile`.
+    3.  `COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./`, then
+        `RUN pnpm install --prod --frozen-lockfile`.
     4.  `COPY src ./src`, `COPY config ./config`, `COPY public ./public`. Each directory needs
         its own line, because Docker copies a directory's contents, not the directory.
     5.  `CMD ["node", "src/server/main.ts"]`.
