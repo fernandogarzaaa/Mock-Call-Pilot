@@ -849,15 +849,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "d79b771ea2904e208ce3fac08316e95e",
+      "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+      "claim_token": "8be2644fe50f4786ad0a08c3aba068a2",
+      "claimed_at": "2026-11-18T20:09:06.960029+00:00",
+      "holder": "agent-2",
+      "last_heartbeat": "2026-11-18T20:09:06.960029+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-2"
     },
     "depends_on": [
       "server"
@@ -879,11 +879,11 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Candidate call page",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "branch": null,
       "path": null
     }
