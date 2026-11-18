@@ -356,15 +356,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "ad9fea7efaf64ee99c60d63c2d139915",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "3384d9ca3e8148a4b912e7d1ed496669",
+      "claimed_at": "2026-11-18T20:34:16.013454+00:00",
+      "holder": "agent-3",
+      "last_heartbeat": "2026-11-18T20:34:16.013454+00:00",
+      "node_version": 1,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-3"
     },
     "depends_on": [],
     "evidence": [],
@@ -384,11 +384,11 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Kill surviving mutants: script",
-    "version": 1,
+    "version": 2,
     "worktree": {
-      "base_branch": null,
+      "base_branch": "feat/mock-call-pilot",
       "branch": null,
       "path": null
     }
