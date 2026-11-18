@@ -21,15 +21,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "11a39db6dd2e41c085eac3578e5ecf84",
+      "base_branch": "feat/mock-call-pilot",
+      "claim_token": "c05e26c85d7742c5883255fc1099f0ff",
+      "claimed_at": "2026-11-18T19:36:19.856232+00:00",
+      "holder": "agent-4",
+      "last_heartbeat": "2026-11-18T19:36:19.856232+00:00",
+      "node_version": 11,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-4"
     },
     "depends_on": [],
     "evidence": [
@@ -59,12 +59,12 @@
     "rejected_count": 1,
     "removed": false,
     "result": null,
-    "retry_at": "2026-11-18T19:36:19.818238+00:00",
+    "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Config loading and live readiness",
-    "version": 11,
+    "version": 12,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
@@ -253,7 +253,7 @@
       "claim_token": "4159e500a7d943b492edaa69bb73e551",
       "claimed_at": "2026-11-18T19:32:08.605036+00:00",
       "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T19:35:09.877901+00:00",
+      "last_heartbeat": "2026-11-18T19:36:09.907346+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-2"
@@ -278,7 +278,7 @@
     "shipped": {},
     "status": "in_progress",
     "title": "Stage machine, turnStep, G1 property test",
-    "version": 9,
+    "version": 11,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "98a5da5f746328bf0ef4d4ec496882e940b7f7bb",
@@ -360,7 +360,7 @@
       "claim_token": "5c832d9d9a814657ae2f1adfe1dcdd79",
       "claimed_at": "2026-11-18T19:32:09.280139+00:00",
       "holder": "agent-1",
-      "last_heartbeat": "2026-11-18T19:35:10.518701+00:00",
+      "last_heartbeat": "2026-11-18T19:36:10.535133+00:00",
       "node_version": 1,
       "ttl_seconds": 1800,
       "worker_id": "agent-1"
@@ -385,7 +385,7 @@
     "shipped": {},
     "status": "in_progress",
     "title": "fs and GCS storage adapters",
-    "version": 9,
+    "version": 11,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
       "base_commit": "6cb178e34c2ca11a2a1387396dbec9229b8024a7",
