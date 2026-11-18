@@ -842,15 +842,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": null,
-      "base_branch": null,
-      "claim_token": null,
-      "claimed_at": null,
-      "holder": null,
-      "last_heartbeat": null,
-      "node_version": null,
-      "ttl_seconds": null,
-      "worker_id": null
+      "attempt_id": "0c04afaf1f3d40758ed73a2930fbf19e",
+      "base_branch": "skein/verify__integrate-base",
+      "claim_token": "4b4ce0e8f832499f9457fb652047cf81",
+      "claimed_at": "2026-11-18T20:18:15.220719+00:00",
+      "holder": "agent-2",
+      "last_heartbeat": "2026-11-18T20:18:15.220719+00:00",
+      "node_version": 2,
+      "ttl_seconds": 1800,
+      "worker_id": "agent-2"
     },
     "depends_on": [
       "web",
@@ -873,9 +873,9 @@
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "unclaimed",
+    "status": "claimed",
     "title": "Full suite, lint, types, mutation gate",
-    "version": 2,
+    "version": 3,
     "worktree": {
       "base_branch": "skein/verify__integrate-base",
       "branch": null,
