@@ -42,11 +42,12 @@
     "shipped": {},
     "status": "claimed",
     "title": "Config loading and live readiness",
-    "version": 3,
+    "version": 4,
     "worktree": {
       "base_branch": "feat/mock-call-pilot",
-      "branch": null,
-      "path": null
+      "base_commit": "b52612649ec7c2dfdb567edd16ddda0a8205bdb0",
+      "branch": "skein/config",
+      "path": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/worktrees/config"
     }
   },
   "deploy": {
