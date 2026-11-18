@@ -632,7 +632,12 @@ its dependencies (several), so it contains its dependencies' code. This was chec
 *   **`stryker.config.json`:** `testRunner: "vitest"`, `coverageAnalysis: "perTest"`,
     `mutate: ["src/**/*.ts", "deploy/load-check.ts", "public/call-core.js",
     "!src/**/*.test.ts", "!src/server/main.ts"]`,
-    `thresholds.break: 70`, `ignorePatterns: [".skein", "docs"]`.
+    `thresholds.break: 70`, `ignorePatterns: [".skein", "docs"]`,
+    `plugins: ["@stryker-mutator/vitest-runner"]` (pnpm's strict `node_modules` hides it from
+    discovery), `tempDirName: ".stryker-tmp"`, and `tsconfigFile` pointed at a missing file to
+    skip Stryker's tsconfig step, which calls an API TypeScript 7 no longer exports. Test data
+    (`src/script/fixture.ts`) is excluded from `mutate`. testteeth uses
+    `stryker.testteeth.json`, the same config plus `vitest.related: false`.
 
 #### 3. `src/types/index.ts` (Create)
 
@@ -1008,7 +1013,8 @@ writes that decision into item 14 before the web unit starts.
     *   builds the adapters from `STORAGE`, `STT` and `PICKER`, including
         `new FakePicker(config.script)` or `new ClaudePicker(client, model, effort,
         systemPrompt(config.script))`;
-    *   serves on `PORT`.
+    *   serves on `PORT`, bound to `0.0.0.0`. The default dual-stack bind let a kernel-picked
+        test port collide with another process's `127.0.0.1` socket.
 *   **Libraries:**
     *   `hono/html` for escaped templates;
     *   `hono/body-limit` (25 MB on `/end`, 2 MB on `/turn`);
