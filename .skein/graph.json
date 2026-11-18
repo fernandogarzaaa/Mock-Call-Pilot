@@ -107,6 +107,14 @@
         "holder": "agent-2",
         "outcome": "failed",
         "started_at": "2026-11-18T20:03:31.495190+00:00"
+      },
+      {
+        "attempt_id": "1d179593541b40a4a23060eff1fc7303",
+        "ended_at": "2026-11-18T20:17:32.418254+00:00",
+        "error": "",
+        "holder": "agent-2",
+        "outcome": "done",
+        "started_at": "2026-11-18T20:12:49.718821+00:00"
       }
     ],
     "attempts_used": 0,
@@ -120,15 +128,15 @@
     ],
     "change_policy": "warn",
     "claim": {
-      "attempt_id": "1d179593541b40a4a23060eff1fc7303",
-      "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
-      "claim_token": "6f88503fac40496eb12f4e3e4236258f",
-      "claimed_at": "2026-11-18T20:12:49.718821+00:00",
-      "holder": "agent-2",
-      "last_heartbeat": "2026-11-18T20:12:49.718821+00:00",
-      "node_version": 15,
-      "ttl_seconds": 1800,
-      "worker_id": "agent-2"
+      "attempt_id": null,
+      "base_branch": null,
+      "claim_token": null,
+      "claimed_at": null,
+      "holder": null,
+      "last_heartbeat": null,
+      "node_version": null,
+      "ttl_seconds": null,
+      "worker_id": null
     },
     "depends_on": [
       "server"
@@ -136,18 +144,18 @@
     "evidence": [
       {
         "command": "@nonce pnpm install --frozen-lockfile --silent && pnpm exec vitest run deploy && pnpm exec tsc --noEmit && pnpm exec biome check deploy && node -e \"console.log(process.env.SKEIN_GATE_NONCE)\"",
-        "duration_ms": 14325,
-        "exit_code": 1,
-        "nonce_ok": false,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/deploy_20261118T200852573229_0.log"
+        "duration_ms": 8163,
+        "exit_code": 0,
+        "nonce_ok": true,
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/deploy_20261118T201724153245_0.log"
       },
       {
         "command": "<adapter:claude_build_pnpm>",
         "exit_code": 0,
-        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/deploy_20261118T200906899177_adapter.log"
+        "output_ref": "/Users/inan/Documents/RHINO PROJECTS/MOCK CALLS/.skein/evidence/deploy_20261118T201732318490_adapter.log"
       }
     ],
-    "handoff_note": "completion command failed (adapter exit=0); see evidence",
+    "handoff_note": "Done. Verification passed. Last output: I never ran `gcloud`. The tests use stubbed `gcloud` and `curl`.",
     "id": "deploy",
     "integration_for": null,
     "intent": {
@@ -159,13 +167,51 @@
     "max_retries": 1,
     "rejected_count": 0,
     "removed": false,
-    "result": null,
+    "result": {
+      "attempt_id": "1d179593541b40a4a23060eff1fc7303",
+      "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
+      "changed_files": [
+        "deploy/deploy.sh",
+        "deploy/deploy.test.ts",
+        "deploy/load-check.test.ts",
+        "deploy/load-check.ts",
+        "deploy/load-test.test.ts",
+        "deploy/load-test.ts"
+      ],
+      "commit": "130ebb56daf1405c222db75bdcf9dd1fb06cd10d",
+      "diff_stats": {
+        "deploy/deploy.sh": {
+          "added": 157,
+          "deleted": 0
+        },
+        "deploy/deploy.test.ts": {
+          "added": 303,
+          "deleted": 0
+        },
+        "deploy/load-check.test.ts": {
+          "added": 148,
+          "deleted": 0
+        },
+        "deploy/load-check.ts": {
+          "added": 56,
+          "deleted": 0
+        },
+        "deploy/load-test.test.ts": {
+          "added": 249,
+          "deleted": 0
+        },
+        "deploy/load-test.ts": {
+          "added": 214,
+          "deleted": 0
+        }
+      }
+    },
     "retry_at": null,
     "retry_backoff_seconds": 60.0,
     "shipped": {},
-    "status": "claimed",
+    "status": "done",
     "title": "Deploy script and load test",
-    "version": 17,
+    "version": 27,
     "worktree": {
       "base_branch": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
       "base_commit": "e3a9d1d05e3636ceb1ae46e1a401424e912674f5",
