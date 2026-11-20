@@ -1037,3 +1037,218 @@ describe("concurrency", () => {
     }
   });
 });
+
+describe("practice calls", () => {
+  interface PracticeBody extends TurnBody {
+    state: Record<string, unknown>;
+  }
+
+  /** Counts every storage write and read, so a test can prove practice never touches storage. */
+  function watched(counts: { writes: number; reads: number }) {
+    return (fs: FsStorage) =>
+      delegate(fs, {
+        put: async (key, bytes, mime) => {
+          counts.writes++;
+          return fs.put(key, bytes, mime);
+        },
+        putJson: async (key, value, generation) => {
+          counts.writes++;
+          return fs.putJson(key, value, generation);
+        },
+        getJson: async <T>(key: string) => {
+          counts.reads++;
+          return fs.getJson<T>(key);
+        },
+      });
+  }
+
+  function startPractice(h: Harness, code: unknown = CODE): Response | Promise<Response> {
+    return h.app.request("/api/practice", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  async function freshState(h: Harness): Promise<Record<string, unknown>> {
+    const res = await startPractice(h);
+    expect(res.status).toBe(201);
+    return (await json<{ state: Record<string, unknown> }>(res)).state;
+  }
+
+  function practiceTurn(
+    h: Harness,
+    state: unknown,
+    text: string,
+    code: string = CODE,
+  ): Response | Promise<Response> {
+    const form = new FormData();
+    form.append("audio", new Blob([text], { type: "audio/webm" }), "turn.webm");
+    form.append("mime", "audio/webm");
+    form.append("clientMs", "1000");
+    form.append("code", code);
+    form.append("state", typeof state === "string" ? state : JSON.stringify(state));
+    return h.app.request("/api/practice/turn", { method: "POST", body: form });
+  }
+
+  async function walkPractice(h: Harness): Promise<PracticeBody[]> {
+    let state = await freshState(h);
+    const bodies: PracticeBody[] = [];
+    for (const text of WALK) {
+      const body = await json<PracticeBody>(await practiceTurn(h, state, text));
+      bodies.push(body);
+      state = body.state;
+    }
+    return bodies;
+  }
+
+  it("runs the same script as the final call, to booked", async () => {
+    const h = await harness();
+    const bodies = await walkPractice(h);
+    expect(bodies.map((body) => body.text)).toEqual(WALK_REPLIES);
+    expect(bodies[4]).toMatchObject({ ended: true, endReason: "booked" });
+    expect(bodies[4]?.state.endReason).toBe("booked");
+  });
+
+  it("never reads or writes storage and returns no link", async () => {
+    const counts = { writes: 0, reads: 0 };
+    const h = await harness({ wrapStorage: watched(counts) });
+    for (let run = 0; run < 3; run++) {
+      const bodies = await walkPractice(h);
+      for (const body of bodies) {
+        expect(Object.keys(body).sort()).toEqual(
+          body.ended ? ["endReason", "ended", "state", "text"] : ["ended", "state", "text"],
+        );
+        expect(JSON.stringify(body)).not.toContain("/r/");
+      }
+    }
+    expect(counts).toEqual({ writes: 0, reads: 0 });
+  });
+
+  it("has no session to end, so no recording link can be made from it", async () => {
+    const h = await harness();
+    const bodies = await walkPractice(h);
+    const ids = JSON.stringify(bodies).match(/[A-Za-z0-9_-]{22}/g) ?? [];
+    expect(ids).toEqual([]);
+    expect((await postEnd(h, "practice")).status).toBe(404);
+  });
+
+  it("starts each practice call, including a redo, from a fresh state", async () => {
+    const h = await harness();
+    const first = await freshState(h);
+    const moved = await json<PracticeBody>(await practiceTurn(h, first, "who is this"));
+    expect(moved.state.stage).not.toBe(first.stage);
+    expect(moved.state.turns).toHaveLength(1);
+
+    h.clock.ms += 5 * MINUTE;
+    const redo = await freshState(h);
+    expect(redo).toEqual({
+      stage: fixtureScript.stages[0],
+      usedObjections: [],
+      turns: [],
+      startedAt: new Date(FIXTURE_START + 5 * MINUTE).toISOString(),
+    });
+    const again = await json<PracticeBody>(await practiceTurn(h, redo, "who is this"));
+    expect(again.text).toBe(WALK_REPLIES[0]);
+    expect(again.state.turns).toHaveLength(1);
+  });
+
+  it("refuses a wrong or missing access code", async () => {
+    const h = await harness();
+    expect((await startPractice(h, "nope")).status).toBe(403);
+    expect((await startPractice(h, null)).status).toBe(403);
+    const state = await freshState(h);
+    expect((await practiceTurn(h, state, "who is this", "nope")).status).toBe(403);
+  });
+
+  it("answers 409 for a turn after the practice call ended", async () => {
+    const h = await harness();
+    const bodies = await walkPractice(h);
+    const res = await practiceTurn(h, bodies[4]?.state, "anything else");
+    expect(res.status).toBe(409);
+    expect(await json<{ error: string }>(res)).toEqual({ error: "ended" });
+  });
+
+  it("rejects a state the server did not shape", async () => {
+    const h = await harness();
+    const good = await freshState(h);
+    const bad: unknown[] = [
+      "not json",
+      "[]",
+      { ...good, stage: "nowhere" },
+      { ...good, startedAt: "yesterday" },
+      { ...good, usedObjections: ["obj.unknown"] },
+      { ...good, usedObjections: ["obj.busy", "obj.busy"] },
+      { ...good, endReason: "won" },
+      {
+        ...good,
+        turns: [
+          { index: 3, clientMs: 1, candidateText: "", prospect: { lineId: null, text: "x" } },
+        ],
+      },
+      {
+        ...good,
+        turns: [
+          { index: 0, clientMs: 1, candidateText: "", prospect: { lineId: "made.up", text: "x" } },
+        ],
+      },
+      {
+        ...good,
+        turns: [
+          { index: 0, clientMs: -1, candidateText: "", prospect: { lineId: null, text: "" } },
+        ],
+      },
+    ];
+    for (const state of bad) expect((await practiceTurn(h, state, "who is this")).status).toBe(422);
+  });
+
+  it("ends with limit_reached once the time is up, like the final call", async () => {
+    const h = await harness();
+    const state = await freshState(h);
+    h.clock.ms += 31 * MINUTE;
+    const body = await json<PracticeBody>(await practiceTurn(h, state, "who is this"));
+    expect(body).toMatchObject({ text: "", ended: true, endReason: "limit_reached" });
+  });
+
+  it("never sends a caller reply back to the page", async () => {
+    const script: ScriptConfig = {
+      ...fixtureScript,
+      objections: [
+        ...fixtureScript.objections,
+        {
+          id: "obj.sendinfo",
+          prospectLine: "TEST sendinfo PROSPECT-LINE",
+          callerReply: "TEST sendinfo CALLER-REPLY",
+          allowedStages: ["d2_lawsuit"],
+          approved: true,
+        },
+      ],
+    };
+    const h = await harness({ script, picker: sequencePicker(["d1.okay", "obj.sendinfo"]) });
+    const first = await json<PracticeBody>(await practiceTurn(h, await freshState(h), "hi"));
+    const res = await practiceTurn(h, first.state, "let me explain");
+    const raw = await res.text();
+    expect(raw).toContain("TEST sendinfo PROSPECT-LINE");
+    expect(raw).not.toContain("CALLER-REPLY");
+  });
+
+  it("leaves the final call recording exactly one link after any practice", async () => {
+    const counts = { writes: 0, reads: 0 };
+    const h = await harness({ wrapStorage: watched(counts) });
+    await walkPractice(h);
+    await walkPractice(h);
+    expect(counts.writes).toBe(0);
+
+    const id = await start(h);
+    await walkToBooked(h, id);
+    const first = await json<{ url: string }>(await postEnd(h, id));
+    const repeat = await json<{ url: string }>(await postEnd(h, id));
+    expect(first.url).toBe(`http://localhost/r/${id}`);
+    expect(repeat.url).toBe(first.url);
+    expect((await getState(h, id)).audio).toEqual({
+      key: `sessions/${id}/audio.webm`,
+      mime: "audio/webm",
+    });
+    expect((await getTranscript(h, id)).turns.map((turn) => turn.candidateText)).toEqual(WALK);
+  });
+});

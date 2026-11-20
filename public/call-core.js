@@ -39,7 +39,9 @@ const TRANSITIONS = {
   name: { submit: "brief" },
   brief: { accept: "mic" },
   mic: { granted: "ready" },
-  ready: { start: "call" },
+  ready: { practice: "practice", final: "confirm" },
+  practice: { end: "ready" },
+  confirm: { start: "call", back: "ready" },
   call: { end: "uploading" },
   uploading: { uploaded: "done", failed: "retry" },
   retry: { retry: "uploading" },
@@ -47,7 +49,8 @@ const TRANSITIONS = {
 };
 
 /**
- * The screen order is name, brief, mic, ready, call, uploading, done, plus uploading to retry.
+ * The screen order is name, brief, mic, ready, confirm, call, uploading, done, plus uploading
+ * to retry. From ready the candidate can also run practice calls and come back to ready.
  * An event that does not apply, or whose guard fails, leaves the screen unchanged.
  */
 export function nextScreen(screen, event) {
@@ -57,7 +60,16 @@ export function nextScreen(screen, event) {
   if (next === undefined) return screen;
   if (screen === "name" && !validName(event.name)) return screen;
   if (screen === "brief" && event.noticeTicked !== true) return screen;
+  // The final call starts only from the confirm screen, after the candidate ticks the box.
+  if (screen === "confirm" && type === "start" && event.confirmed !== true) return screen;
   return next;
+}
+
+/** The buttons on a call screen. Practice can be redone; the final call is one attempt. */
+export function callControls(screen) {
+  if (screen === "practice") return ["speak", "done", "redo", "end"];
+  if (screen === "call") return ["speak", "done", "end"];
+  return [];
 }
 
 const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

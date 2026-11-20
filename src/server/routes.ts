@@ -14,6 +14,7 @@ import type {
   TurnInput,
 } from "../types/index.ts";
 import { PreconditionFailed, TranscribeError } from "../types/index.ts";
+import { asSession, freshPractice, parsePracticeState, toPractice } from "./practice.ts";
 import { callShell, messagePage, recordingPage } from "./views.ts";
 
 export interface AppDeps {
@@ -191,6 +192,55 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     };
     await storage.putJson(stateKey(id), state, "0");
     return c.json({ id, maxCallMinutes: config.maxCallMinutes }, 201);
+  });
+
+  // Practice: same script, picker and limit as a real call, but nothing is ever stored.
+  app.post("/api/practice", async (c) => {
+    let body: unknown = null;
+    try {
+      body = await c.req.json();
+    } catch {
+      // Treated like a body with no fields.
+    }
+    const given = typeof body === "object" && body !== null ? (body as { code?: unknown }) : {};
+    if (!codeMatches(config.accessCode, given.code)) return c.json({ error: "bad_code" }, 403);
+    const state = freshPractice(config.script, now());
+    return c.json({ state, maxCallMinutes: config.maxCallMinutes }, 201);
+  });
+
+  app.post("/api/practice/turn", turnLimit, async (c) => {
+    const form = await readForm(c);
+    if (!codeMatches(config.accessCode, form.code)) return c.json({ error: "bad_code" }, 403);
+    const audio = await audioBytes(form);
+    const clientMs = nonNegativeNumber(form.clientMs);
+    const practice = parsePracticeState(form.state, config.script);
+    if (audio === null || clientMs === null || practice === null) {
+      return c.json({ error: "bad_request" }, 422);
+    }
+    if (practice.endReason !== undefined) return c.json({ error: "ended" }, 409);
+    const mime = typeof form.mime === "string" && form.mime !== "" ? form.mime : "audio/webm";
+
+    const state = asSession(practice);
+    const at = now();
+    const input: TurnInput = limitPassed(state, config.maxCallMinutes, at)
+      ? { text: "" }
+      : await transcribe(transcriber, audio, mime);
+    const step = await turnStep(
+      config.script,
+      config.maxCallMinutes,
+      state,
+      input,
+      clientMs,
+      picker,
+      at,
+    );
+    const result: TurnResult & { state: ReturnType<typeof toPractice> } = {
+      text: step.displayText,
+      ended: step.ended,
+      state: toPractice(step.state),
+    };
+    if (step.ended) result.endReason = step.state.endReason;
+    return c.json(result);
   });
 
   app.post("/api/s/:id/turn", turnLimit, async (c) => {

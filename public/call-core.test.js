@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  callControls,
   formatRemaining,
   LOST_MESSAGE,
   MAX_UPLOAD_BYTES,
@@ -73,15 +74,31 @@ describe("tooLargeToUpload", () => {
   });
 });
 
+describe("callControls", () => {
+  it("offers Redo on a practice call", () => {
+    expect(callControls("practice")).toEqual(["speak", "done", "redo", "end"]);
+  });
+  it("gives the final call no Redo", () => {
+    expect(callControls("call")).toEqual(["speak", "done", "end"]);
+    expect(callControls("call")).not.toContain("redo");
+  });
+  it("has no call buttons off the call screens", () => {
+    for (const screen of ["ready", "confirm", "uploading", "done"]) {
+      expect(callControls(screen)).toEqual([]);
+    }
+  });
+});
+
 describe("nextScreen", () => {
   const ok = { type: "submit", name: "Ana" };
-  it("walks name, brief, mic, ready, call, uploading, done", () => {
+  it("walks name, brief, mic, ready, confirm, call, uploading, done", () => {
     let screen = "name";
     const events = [
       ok,
       { type: "accept", noticeTicked: true },
       { type: "granted" },
-      { type: "start" },
+      { type: "final" },
+      { type: "start", confirmed: true },
       { type: "end" },
       { type: "uploaded" },
     ];
@@ -90,7 +107,38 @@ describe("nextScreen", () => {
       screen = nextScreen(screen, event);
       seen.push(screen);
     }
-    expect(seen).toEqual(["name", "brief", "mic", "ready", "call", "uploading", "done"]);
+    expect(seen).toEqual(["name", "brief", "mic", "ready", "confirm", "call", "uploading", "done"]);
+  });
+  it("runs any number of practice calls from ready and comes back each time", () => {
+    let screen = "ready";
+    for (let i = 0; i < 3; i++) {
+      screen = nextScreen(screen, { type: "practice" });
+      expect(screen).toBe("practice");
+      screen = nextScreen(screen, { type: "end" });
+      expect(screen).toBe("ready");
+    }
+  });
+  it("never reaches upload or the link from a practice call", () => {
+    for (const type of ["start", "uploaded", "failed", "retry", "final", "redo"]) {
+      expect(nextScreen("practice", { type, confirmed: true })).toBe("practice");
+    }
+    expect(nextScreen("practice", { type: "end" })).not.toBe("uploading");
+  });
+  it("blocks the final call until the candidate confirms", () => {
+    expect(nextScreen("ready", { type: "start" })).toBe("ready");
+    expect(nextScreen("ready", { type: "start", confirmed: true })).toBe("ready");
+    expect(nextScreen("ready", { type: "final" })).toBe("confirm");
+    expect(nextScreen("confirm", { type: "start" })).toBe("confirm");
+    expect(nextScreen("confirm", { type: "start", confirmed: false })).toBe("confirm");
+    expect(nextScreen("confirm", { type: "start", confirmed: "yes" })).toBe("confirm");
+    expect(nextScreen("confirm", { type: "start", confirmed: true })).toBe("call");
+    expect(nextScreen("confirm", { type: "back" })).toBe("ready");
+  });
+  it("gives the final call no way back to practice or ready", () => {
+    for (const type of ["practice", "back", "redo", "start", "final"]) {
+      expect(nextScreen("call", { type, confirmed: true })).toBe("call");
+    }
+    expect(nextScreen("done", { type: "practice" })).toBe("done");
   });
   it("needs a valid name to leave the name screen", () => {
     expect(nextScreen("name", { type: "submit", name: "  " })).toBe("name");

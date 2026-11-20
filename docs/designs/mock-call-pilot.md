@@ -79,7 +79,8 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
 *   AI scoring, grading or rating of any kind. Harold scores manually.
 *   The AI speaking (voice AI). Phase 2.
 *   A booking or scheduling system (pending gap 2).
-*   Retry or restart of a call. Possible future addition; not built.
+*   Redo of the final call. Only practice calls can be redone (D4).
+*   Recording, storing or linking practice calls (D4).
 *   The under-10 fleet branch, the Lost jobs and Growing pains paths, the cold voicemail, and
     the follow-up email.
 *   A results dashboard, reviewer accounts or an admin UI.
@@ -125,6 +126,25 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   *Prospect:* fictitious, not a real person. Rhieza will send the details. They are not
         invented here.
 
+*   **D4, practice mode and Redo (2026-11-21, Fernando).** The retry request is confirmed,
+    as practice mode plus a Redo button.
+    *   From the Ready screen the candidate can start any number of practice calls. A practice
+        call uses the same prospect, script, picker and time limit as the final call.
+    *   Practice calls are not recorded and not stored: no full-call recorder runs, no session
+        folder is created and no link is made. The page holds the practice state and sends it
+        back with each turn to `POST /api/practice/turn`, so the server stays stateless (see
+        Sessions and concurrency). Each turn's audio still goes to speech-to-text and the
+        picker, because the prospect has to answer; the practice label says so.
+    *   A practice call shows a "PRACTICE CALL: not recorded, not saved, does not count" label,
+        a **Redo** button that drops the call and starts a fresh one, and **End practice**,
+        which returns to Ready.
+    *   The final call is chosen with **Make my final call**, then a confirm screen with a tick
+        box ("I am ready to make my final call") and **Start final call**, or **Back to
+        practice**. It shows a "FINAL CALL: recorded and graded" label and has no Redo. Its
+        recording, link and grading are unchanged.
+    *   Practice and final are told apart by words as well as colour (green practice label,
+        purple final label and button).
+
 ## Open Questions
 
 The list of unanswered gaps from the brief is kept in one place,
@@ -147,8 +167,9 @@ The list of unanswered gaps from the brief is kept in one place,
 *   **Q4, abandoned calls.** If the candidate closes the tab mid-call, is a recording link still
     produced? Today nothing is uploaded and no link exists. A "yes" means adding chunked uploads
     during the call (see Future Improvements).
-*   **Q5, one call per candidate.** A candidate who has the shared access code can start more
-    than one call. The pilot doesn't build retry, but it also doesn't block a second start.
+*   **Q5, one final call per candidate.** Practice is unlimited by design (D4). The page offers
+    one final call with no Redo, but the server does not enforce it: a candidate who reloads the
+    page with the shared access code can start a second final call, and gets a second link.
     Should each candidate get their own single-use code? The answer depends on gaps 1 and 2.
     Until then, the recording page shows the candidate name and start time, so Harold can spot
     duplicates.
@@ -165,6 +186,16 @@ The list of unanswered gaps from the brief is kept in one place,
 *   **Then**: the call ends with reason `booked`. The page shows "Uploading", then the recording
     link. The link opens a page with the full audio, the candidate's transcript and the
     prospect's lines in order.
+
+### CUJ 6: Candidate practises, redoes, then makes the final call
+
+*   **Given**: the candidate has allowed the microphone and is on the Ready screen.
+*   **When**: they press **Start practice call**, speak a few turns, press **Redo**, practise
+    again to the end, then press **Make my final call**, tick the confirm box and press
+    **Start final call**.
+*   **Then**: Redo shows an empty call with the opening hint and a fresh timer. No practice call
+    creates a session folder or a link. The final call shows no Redo, and only it ends with the
+    recording link.
 
 ### CUJ 2: Prospect pushes back and the candidate circles back
 
@@ -322,6 +353,12 @@ At End, the page uploads that one file with `/end`, so Harold gets one unbroken 
     *   `ACCESS_CODE` is one shared value from the environment, so random visitors can't start
         calls and spend API credits.
     *   Re-runs by the same candidate are Q5.
+    *   Practice calls (D4) create no session. `POST /api/practice` returns a fresh state
+        without writing anything, and the page sends that state back with each turn. The server
+        checks every field against the script (known stage, objection and line ids, turn
+        indexes in order) and answers 422 to anything else. It strips caller replies before
+        returning the new state, so D1 holds in practice too. Because the page holds the state,
+        a lost response is harmless: resending recomputes the same turn.
 *   **Session state.** All of it lives in `sessions/<id>/state.json`: stage, turns, used
     objections, start and end times, and end reason.
     *   Each turn reads the file and writes it back with a Cloud Storage generation
@@ -548,7 +585,6 @@ no cloud account.
 
 ### Future Improvements
 
-*   Retry or restart of a call (requested by Rhieza, not confirmed).
 *   Voice AI prospect (phase 2), which would make hands-free turns (Alternative B) worth it.
 *   Chunked uploads during the call, so abandoned calls keep their audio (only if Q4 says
     yes).
@@ -1034,6 +1070,8 @@ writes that decision into item 14 before the web unit starts.
 | `GET /call` | `?code=` | The call page shell (`<script type="module" src="/static/call.js">`, `<link href="/static/call.css">`, the config texts in a JSON `<script>` block) or a 403 page. Never includes `callerReply`. |
 | `GET /static/*` | (none) | Files from `public/`. |
 | `POST /api/sessions` | JSON `{ code, name }` | Sent when the candidate presses Start. 201 `{ id, maxCallMinutes }` and `state.json` created with `ifGeneration "0"`. 403 bad code; 422 name not 1-80 characters after trimming. |
+| `POST /api/practice` | JSON `{ code }` | D4. 201 `{ state, maxCallMinutes }`, where `state` is `{ stage, usedObjections: [], turns: [], startedAt }`. Writes nothing. 403 bad code. |
+| `POST /api/practice/turn` | multipart `audio`, `mime`, `clientMs`, `code`, `state` (JSON) | D4. Validates `state` (422 if any field is off), 409 `ended` if it already has an end reason, then runs `turnStep` exactly as `/api/s/:id/turn` does. 200 `{ text, ended, endReason?, state }`, with caller replies removed from `state`. Reads and writes no storage. 403 bad code. |
 | `POST /api/s/:id/turn` | multipart `audio`, `mime`, `turnIndex`, `clientMs` | Reads the state. First, if `turnIndex < turns.length`, returns that stored turn's result: its prospect text, plus `ended`/`endReason` if that turn ended the call. Then 409 `{error:"ended"}` if the call has ended, and 409 `{error:"gap"}` if `turnIndex > turns.length`. Otherwise it transcribes (catching `TranscribeError`), runs `turnStep`, and writes with the read generation. On `PreconditionFailed` it re-reads: if the index is now stored, it returns that result; otherwise 409 `{error:"conflict"}`. 200 `{ text, ended, endReason? }`. The response never carries `callerReply`. |
 | `POST /api/s/:id/end` | multipart `audio`, `mime`, `reason` | The server decides the end reason: keep `state.endReason` if set; else `limit_reached` if the limit passed; else accept `candidate_ended` or `limit_reached` from the client (422 otherwise). If `audio` is already stored, it returns the stored URL without rewriting. Otherwise it stores `sessions/<id>/audio.<ext>` (MIME without parameters: `audio/mp4` gives `mp4`, `audio/webm` gives `webm`, `audio/ogg` gives `ogg`, anything else 422), writes `transcript.json` (a `Transcript`), then writes `state.json` with `audio`, `endReason` and `endedAt` under the generation precondition, re-reading once on `PreconditionFailed`. 200 `{ url: "<scheme>://<host>/r/<id>" }` (scheme rule above). |
 | `GET /r/:id` | (none) | The recording page, or "Call in progress" while `state.audio` is unset, or 404. |
@@ -1083,9 +1121,12 @@ writes that decision into item 14 before the web unit starts.
 *   **`call-core.js`:** pure functions with no DOM.
     *   `pickMimeType(isTypeSupported)`: the first supported of `audio/mp4`,
         `audio/webm;codecs=opus`, `audio/ogg;codecs=opus`.
-    *   `nextScreen(screen, event)`: the screen order `name → brief → mic → ready → call →
-        uploading → done`, plus `uploading → retry`. `brief` shows client summary, task
-        instructions and notice, and needs the tick.
+    *   `nextScreen(screen, event)`: the screen order `name → brief → mic → ready → confirm →
+        call → uploading → done`, plus `uploading → retry`, `ready ⇄ practice` and
+        `confirm → ready` (Back). `brief` shows client summary, task instructions and notice,
+        and needs the tick. `confirm → call` needs `confirmed: true` (D4).
+    *   `callControls(screen)`: `practice` gets Speak, Done, Redo, End; `call` gets Speak,
+        Done, End, with no Redo.
     *   `postWithRetry(fetchFn, url, form, attempts = 3)`: retries only on network errors and
         5xx, with 1 s and 2 s waits.
     *   `onTurnError(status, body)` maps a turn failure to the page's next action:
@@ -1112,6 +1153,11 @@ writes that decision into item 14 before the web unit starts.
         says the recording is too large to upload and offers **Download recording**. Otherwise it posts
         `/end`. On failure it shows **Retry upload** with the blob kept in memory.
     *   **Done screen:** the link with a Copy button.
+    *   **Practice (D4):** **Start practice call** calls `POST /api/practice`, starts the
+        timer and no full-call recorder. Turns go to `/api/practice/turn` with the held state.
+        **Redo** and the end of a practice call bump a call counter, so late answers to the old
+        call are dropped, and keep the microphone open. The end of a practice call returns to
+        Ready with a one-line note of how it ended.
 *   **`call.css`:** works from 360 CSS px wide with no horizontal scroll and every control
     visible.
 *   **Tests (`call-core.test.js`):**

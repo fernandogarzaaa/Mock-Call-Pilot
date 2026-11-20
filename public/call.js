@@ -1,4 +1,5 @@
 import {
+  callControls,
   formatRemaining,
   NAME_MAX,
   nextScreen,
@@ -11,6 +12,7 @@ import {
 
 const AUDIO_BITS_PER_SECOND = 32000;
 const LAST_LINE_MS = 3000;
+const LOST_PRACTICE = "Connection lost. Press Done to send that turn again, or Redo to start over.";
 const cfg = JSON.parse(document.getElementById("cfg").textContent);
 const app = document.getElementById("app");
 const code = new URLSearchParams(location.search).get("code") ?? "";
@@ -38,6 +40,12 @@ const state = {
   blob: null,
   tooLarge: false,
   link: "",
+  // Practice calls live only in this page; the server sends the state back each turn.
+  practiceState: null,
+  practiceNote: "",
+  confirmTicked: false,
+  // Bumped by Redo and by the end of a practice call, so late answers to an old call are dropped.
+  callGen: 0,
 };
 let ui = {};
 
@@ -143,7 +151,7 @@ const views = {
         "div",
         { className: "tick" },
         tick,
-        h("label", { htmlFor: "notice-tick" }, "I understand this call is recorded"),
+        h("label", { htmlFor: "notice-tick" }, "I understand my final call is recorded"),
       ),
       next,
     );
@@ -165,44 +173,102 @@ const views = {
   },
 
   ready() {
-    const start = h(
+    const practice = h(
       "button",
-      { type: "button", className: "primary", onclick: startCall },
-      "Start call",
+      { type: "button", className: "primary", onclick: startPractice },
+      "Start practice call",
     );
-    ui.start = start;
-    return h(
-      "section",
-      {},
+    ui.start = practice;
+    const final = h(
+      "button",
+      { type: "button", className: "final", onclick: () => go({ type: "final" }) },
+      "Make my final call",
+    );
+    const children = [
       h("h1", {}, "Ready"),
       h("p", {}, "Press Speak to talk and Done when you finish each turn."),
       h("p", {}, `Time limit: ${limitLabel()}.`),
+    ];
+    if (state.practiceNote) children.push(h("p", { className: "status" }, state.practiceNote));
+    children.push(
       errorLine(),
-      start,
+      h(
+        "div",
+        { className: "choice practice-choice" },
+        h("h2", {}, "Practice call"),
+        h(
+          "p",
+          {},
+          "Practice as many times as you like. Practice calls are not recorded, not saved and not graded.",
+        ),
+        practice,
+      ),
+      h(
+        "div",
+        { className: "choice final-choice" },
+        h("h2", {}, "Final call"),
+        h("p", {}, "Recorded and graded. One attempt, with no redo."),
+        final,
+      ),
+    );
+    return h("section", {}, ...children);
+  },
+
+  confirm() {
+    const start = h(
+      "button",
+      { type: "button", className: "final", disabled: !state.confirmTicked, onclick: startCall },
+      "Start final call",
+    );
+    ui.start = start;
+    const tick = h("input", {
+      id: "final-tick",
+      type: "checkbox",
+      checked: state.confirmTicked,
+      onchange(event) {
+        state.confirmTicked = event.target.checked;
+        start.disabled = !state.confirmTicked;
+      },
+    });
+    const back = h(
+      "button",
+      {
+        type: "button",
+        onclick() {
+          state.confirmTicked = false;
+          go({ type: "back" });
+        },
+      },
+      "Back to practice",
+    );
+    return h(
+      "section",
+      {},
+      h("h1", {}, "Start your final call?"),
+      h(
+        "ul",
+        {},
+        h("li", {}, "This call is recorded and graded."),
+        h("li", {}, "You get one attempt. There is no redo."),
+        h("li", {}, "When it ends you get the link for your Paid Test document."),
+      ),
+      h(
+        "div",
+        { className: "tick" },
+        tick,
+        h("label", { htmlFor: "final-tick" }, "I am ready to make my final call"),
+      ),
+      errorLine(),
+      h("div", { className: "controls" }, start, back),
     );
   },
 
+  practice() {
+    return callView("practice");
+  },
+
   call() {
-    ui.clock = h("span", { className: "clock" }, formatRemaining(state.limitMs));
-    ui.lines = h("ol", { className: "prospect-lines", "aria-live": "polite" });
-    ui.empty = h("p", { className: "hint" }, "Press Speak and say your opening line.");
-    ui.status = h("p", { className: "status", role: "status" }, state.status);
-    ui.speak = h("button", { type: "button", className: "primary", onclick: onSpeak }, "Speak");
-    ui.done = h("button", { type: "button", className: "primary", onclick: onDone }, "Done");
-    ui.end = h("button", { type: "button", className: "danger", onclick: onEndCall }, "End Call");
-    for (const text of state.lines) addLine(text);
-    queueMicrotask(updateControls);
-    const label = cfg.maxCallMinutesIsDemo ? "Time left (demo limit)" : "Time left";
-    return h(
-      "section",
-      { className: "call" },
-      h("p", { className: "timer" }, `${label}: `, ui.clock),
-      h("h2", {}, "Prospect"),
-      ui.empty,
-      ui.lines,
-      ui.status,
-      h("div", { className: "controls" }, ui.speak, ui.done, ui.end),
-    );
+    return callView("call");
   },
 
   uploading() {
@@ -254,6 +320,44 @@ const views = {
     );
   },
 };
+
+// The practice and final call screens share one layout; only the label and the buttons differ.
+function callView(screen) {
+  const practice = screen === "practice";
+  ui.clock = h("span", { className: "clock" }, formatRemaining(state.limitMs));
+  ui.lines = h("ol", { className: "prospect-lines", "aria-live": "polite" });
+  ui.empty = h("p", { className: "hint" }, "Press Speak and say your opening line.");
+  ui.status = h("p", { className: "status", role: "status" }, state.status);
+  ui.speak = h("button", { type: "button", className: "primary", onclick: onSpeak }, "Speak");
+  ui.done = h("button", { type: "button", className: "primary", onclick: onDone }, "Done");
+  ui.redo = h("button", { type: "button", onclick: onRedo }, "Redo");
+  ui.end = h(
+    "button",
+    { type: "button", className: "danger", onclick: onEndCall },
+    practice ? "End practice" : "End Call",
+  );
+  for (const text of state.lines) addLine(text);
+  queueMicrotask(updateControls);
+  const label = cfg.maxCallMinutesIsDemo ? "Time left (demo limit)" : "Time left";
+  const mode = practice
+    ? h(
+        "p",
+        { className: "mode practice-mode", role: "status" },
+        "PRACTICE CALL: not recorded, not saved, does not count. Your speech is still sent to the speech-to-text and AI services so the prospect can answer.",
+      )
+    : h("p", { className: "mode final-mode" }, "FINAL CALL: recorded and graded. One attempt.");
+  return h(
+    "section",
+    { className: "call" },
+    mode,
+    h("p", { className: "timer" }, `${label}: `, ui.clock),
+    h("h2", {}, "Prospect"),
+    ui.empty,
+    ui.lines,
+    ui.status,
+    h("div", { className: "controls" }, ...callControls(screen).map((name) => ui[name])),
+  );
+}
 
 async function copyLink(button, input) {
   try {
@@ -333,16 +437,85 @@ async function startCall() {
   }
   state.id = session.id;
   state.limitMs = session.maxCallMinutes * 60000;
+  resetCall();
   state.full = record();
   state.startedAt = performance.now();
   state.timer = setInterval(tick, 250);
-  go({ type: "start" });
+  go({ type: "start", confirmed: state.confirmTicked });
+}
+
+// Fresh per-call page state, shared by the final call, a practice call and Redo.
+function resetCall() {
+  state.callGen++;
+  clearInterval(state.timer);
+  state.turn?.stop();
+  state.turn = null;
+  state.pending = null;
+  state.busy = null;
+  state.finishing = false;
+  state.turnIndex = 0;
+  state.lines = [];
+  state.status = "";
+}
+
+async function startPractice() {
+  if (ui.start) ui.start.disabled = true;
+  state.error = "";
+  let body = null;
+  try {
+    const response = await fetch("/api/practice", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (response.status === 403) state.error = "The access code in this link was not accepted.";
+    body = response.ok ? await response.json().catch(() => null) : null;
+  } catch {
+    state.error = "Could not reach the server. Try again.";
+  }
+  if (!body?.state) {
+    state.error ||= "Could not start the practice call. Try again.";
+    render();
+    return;
+  }
+  resetCall();
+  state.practiceState = body.state;
+  state.practiceNote = "";
+  state.limitMs = body.maxCallMinutes * 60000;
+  state.startedAt = performance.now();
+  state.timer = setInterval(tick, 250);
+  // Redo starts a practice call while already on the practice screen, so render directly.
+  if (!go({ type: "practice" })) render();
+}
+
+const REASON_WORDS = {
+  booked: "the prospect booked the meeting",
+  prospect_ended: "the prospect ended the call",
+  limit_reached: "the time ran out",
+  candidate_ended: "you ended it",
+};
+
+// Ends a practice call: nothing to upload, the microphone stays open for the next call.
+async function finishPractice(reason, lingerMs) {
+  if (state.finishing) return;
+  state.finishing = true;
+  const gen = state.callGen;
+  clearInterval(state.timer);
+  updateControls();
+  if (lingerMs > 0) await sleep(lingerMs);
+  if (gen !== state.callGen) return;
+  resetCall();
+  state.practiceState = null;
+  state.practiceNote = `Practice call over: ${REASON_WORDS[reason] ?? "it ended"}. Practice again or make your final call.`;
+  go({ type: "end" });
 }
 
 function tick() {
   const left = state.limitMs - (performance.now() - state.startedAt);
   if (ui.clock) ui.clock.textContent = formatRemaining(left);
-  if (left <= 0) beginFinish("limit_reached", 0);
+  if (left > 0) return;
+  if (state.screen === "practice") finishPractice("limit_reached", 0);
+  else beginFinish("limit_reached", 0);
 }
 
 function setStatus(text) {
@@ -356,6 +529,7 @@ function updateControls() {
   ui.speak.disabled = locked || state.turn !== null || state.pending !== null;
   ui.done.disabled = locked || (state.turn === null && state.pending === null);
   ui.end.disabled = locked;
+  ui.redo.disabled = state.finishing;
 }
 
 function addLine(text) {
@@ -374,7 +548,9 @@ function onSpeak() {
 
 function onDone() {
   if (state.busy) return;
+  const gen = state.callGen;
   state.busy = doDone().finally(() => {
+    if (gen !== state.callGen) return;
     state.busy = null;
     updateControls();
   });
@@ -389,7 +565,44 @@ async function doDone() {
     state.turn = null;
     state.pending = { index: state.turnIndex, clientMs, blob, resent: false };
   }
-  if (state.pending && !state.finishing) await submitPending();
+  if (state.pending && !state.finishing) {
+    await (state.screen === "practice" ? submitPractice() : submitPending());
+  }
+}
+
+async function submitPractice() {
+  const turn = state.pending;
+  const gen = state.callGen;
+  setStatus("Sending.");
+  const form = new FormData();
+  const type = turn.blob.type;
+  form.append("audio", turn.blob, `turn-${turn.index}.${recordingExtension(type)}`);
+  form.append("mime", type);
+  form.append("clientMs", String(turn.clientMs));
+  form.append("code", code);
+  form.append("state", JSON.stringify(state.practiceState));
+
+  let body = null;
+  try {
+    const response = await postWithRetry(fetch, "/api/practice/turn", form);
+    body = response.ok ? await response.json().catch(() => null) : null;
+  } catch {
+    // Reported below.
+  }
+  if (gen !== state.callGen) return;
+  if (typeof body?.text !== "string" || !body.state) {
+    setStatus(LOST_PRACTICE);
+    return;
+  }
+  state.pending = null;
+  state.practiceState = body.state;
+  state.turnIndex = turn.index + 1;
+  if (body.text !== "") {
+    state.lines.push(body.text);
+    addLine(body.text);
+  }
+  setStatus("");
+  if (body.ended) finishPractice(body.endReason, body.text === "" ? 0 : LAST_LINE_MS);
 }
 
 async function submitPending() {
@@ -435,8 +648,18 @@ async function submitPending() {
 }
 
 function onEndCall() {
+  if (state.screen === "practice") {
+    finishPractice("candidate_ended", 0);
+    return;
+  }
   if (!window.confirm("End the call now?")) return;
   beginFinish("candidate_ended", 0);
+}
+
+// Only the practice screen has a Redo button (callControls); the final call is one attempt.
+function onRedo() {
+  if (state.screen !== "practice" || state.finishing) return;
+  startPractice();
 }
 
 // The first caller wins; later ones (timer, button, last line) are ignored.
