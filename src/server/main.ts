@@ -1,11 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { serve } from "@hono/node-server";
 import { loadConfig } from "../config/load.ts";
-import { ClaudePicker, type PickerClient } from "../picker/claude.ts";
+import { ClaudePicker } from "../picker/claude.ts";
 import { FakePicker } from "../picker/fake.ts";
 import { systemPrompt } from "../picker/prompt.ts";
 import { FsStorage } from "../storage/fs.ts";
 import { GcsStorage } from "../storage/gcs.ts";
+import { R2Storage } from "../storage/r2.ts";
 import { FakeTranscriber } from "../stt/fake.ts";
 import { ScribeTranscriber } from "../stt/scribe.ts";
 import type { LinePicker, ResolvedConfig, Storage, Transcriber } from "../types/index.ts";
@@ -21,6 +22,18 @@ function requireEnv(env: Env, name: string): string {
 }
 
 async function buildStorage(env: Env): Promise<Storage> {
+  if (env.STORAGE === "r2") {
+    const { AwsClient } = await import("aws4fetch");
+    const client = new AwsClient({
+      accessKeyId: requireEnv(env, "R2_ACCESS_KEY_ID"),
+      secretAccessKey: requireEnv(env, "R2_SECRET_ACCESS_KEY"),
+      service: "s3",
+      region: "auto",
+      retries: 2,
+    });
+    const endpoint = `https://${requireEnv(env, "R2_ACCOUNT_ID")}.r2.cloudflarestorage.com`;
+    return new R2Storage(client, endpoint, requireEnv(env, "R2_BUCKET"));
+  }
   if ((env.STORAGE ?? "fs") === "gcs") {
     const { Storage: CloudStorage } = await import("@google-cloud/storage");
     return new GcsStorage(new CloudStorage().bucket(requireEnv(env, "BUCKET")));

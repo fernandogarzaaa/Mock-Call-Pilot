@@ -100,9 +100,22 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   **Accepted trade-off (2026-11-19, Fernando):** the recording link is handed to the
         candidate. A candidate who shares it can give later candidates the approved replies.
         Fernando reviewed this and kept D1 as written.
-*   **D2, the stack (2026-11-19, Fernando).**
-    *   Google Cloud: Cloud Run for the app, one Cloud Storage bucket for audio and session
-        files, and Secret Manager for API keys.
+*   **D2, the stack (2026-11-19, Fernando; hosting changed 2026-11-21, Inan).**
+    *   **Hosting, from 2026-11-21:** one Render web service on the free plan, running the
+        repo's Dockerfile, and one private Cloudflare R2 bucket (free tier) for audio and
+        session files. API keys and R2 credentials are Render environment variables.
+        *   *Why:* both are $0. The pilot is one persistent Node server, which Render runs as
+            is. Vercel Hobby was ruled out: it caps WebSocket connections at 300 seconds and is
+            for non-commercial personal use only, and this is a business pilot.
+        *   *Render free limits:* 512 MB RAM and 750 instance hours a month. The service sleeps
+            after 15 minutes idle and takes about 1 minute to wake, so the first visitor after
+            a quiet spell waits. There is no persistent disk: anything written locally is lost
+            on restart or sleep, so recordings must live in R2. Free plan means one instance.
+        *   *R2 free limits:* 10 GB storage, 1 million writes and 10 million reads a month, free
+            egress. It is S3-compatible, so the server talks to it with signed S3 requests.
+        *   *Superseded (2026-11-19 to 2026-11-21):* Google Cloud, Cloud Run plus a Cloud
+            Storage bucket and Secret Manager. The `gcs` adapter and `deploy/deploy.sh` stay in
+            the repo but are no longer the deploy path.
     *   Node 26 and pnpm, as a standalone project. It shares no code or infrastructure with
         other Rhino Squad repositories.
     *   Speech-to-text defaults to ElevenLabs Scribe, and line choice to Claude. They sit behind
@@ -233,8 +246,10 @@ The list of unanswered gaps from the brief is kept in one place,
 
 ### Components
 
-There is one Node 26 TypeScript server on Cloud Run and one static browser page. There is no
-database: each session is a folder of objects in one Cloud Storage bucket. There is no build
+There is one Node 26 TypeScript server on Render and one static browser page. There is no
+database: each session is a folder of objects in one R2 bucket (`STORAGE=r2`). The diagram and
+some sections below still say Cloud Run and Cloud Storage; since D2 changed on 2026-11-21, read
+them as Render and R2. Section "Deploy" and Risk 7 describe the differences. There is no build
 step either. Node 26 strips TypeScript types at load time and runs `.ts` files directly, and the
 browser page is plain JavaScript.
 
@@ -452,7 +467,27 @@ and must tick "I understand this call is recorded".
 
 ### Deploy
 
-`deploy/deploy.sh` wraps `gcloud`:
+**From 2026-11-21 (D2): Render plus R2.** `render.yaml` is a Render Blueprint for one free web
+service. It builds the repo's Dockerfile from branch `feat/mock-call-pilot`, uses `/healthz` as
+the health check, and starts in demo mode with fake speech-to-text and picker. Render sets
+`PORT` and terminates TLS, sending `X-Forwarded-Proto: https`, so links start with `https://`.
+
+*   **Storage, `src/storage/r2.ts`.** It implements the same `Storage` interface as the other
+    adapters, through R2's S3 API signed with `aws4fetch`.
+    *   `getJson` is one GET; the object's ETag stands in for the Cloud Storage generation.
+    *   `putJson` writes with `If-None-Match: *` for a new object (generation `"0"`) and
+        `If-Match: <ETag>` otherwise. R2 answers 412 to a lost condition and 409 to a
+        concurrent conditional write; both become `PreconditionFailed`.
+    *   `readUrl` returns a presigned GET valid for 1 hour. The bucket stays private and no
+        public R2 URL is needed: the recording page links to `/r/<id>/audio`, which redirects
+        to a fresh presigned URL, so the link works without a login.
+*   **Retention.** R2 has no deploy script here. Set an object lifecycle rule on the bucket in
+    the Cloudflare dashboard (delete after `gaps.retentionDays` days) before live mode. Nothing
+    checks that the rule matches the config.
+*   **Environment.** Listed in README.md, "Render environment variables". Secrets are entered in
+    the Render dashboard (`sync: false`) and never committed.
+
+**Superseded (Google Cloud, kept for reference).** `deploy/deploy.sh` wraps `gcloud`:
 
 *   It creates the bucket as private.
 *   It reads `gaps.retentionDays` from `config/pilot.json` and sets the matching deletion rule.
@@ -489,6 +524,16 @@ no cloud account.
     two (scaffold item 7).
 6.  **Upload at End.** Nothing is saved until End. Closing the tab mid-call loses the audio
     (Q4).
+7.  **Render free tier (D2).**
+    *   *Cold start:* after 15 minutes idle the first request takes about 1 minute. A candidate
+        opening the call link, or Harold opening a recording link, may wait that long. A
+        session in progress keeps the service awake.
+    *   *One instance, 512 MB:* all simultaneous calls share one process. `/end` holds each
+        upload (up to 25 MB) in memory, so about 10 calls ending in the same second could use
+        around 250 MB. The CUJ 4 load run (10 sessions) checks this on the deployed service.
+    *   *750 hours a month* covers one service running all month.
+    *   *Request size:* Render's limit on request bodies has not been measured; the 25 MB `/end`
+        limit assumes it is higher. The deployed load run is the check.
 
 ## Alternatives Considered
 

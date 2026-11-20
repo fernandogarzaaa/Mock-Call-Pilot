@@ -43,9 +43,28 @@ pnpm mutate      # Stryker mutation testing (break threshold 70)
 
 ## Deploy
 
-```sh
-ANTHROPIC_API_KEY=... ELEVENLABS_API_KEY=... ACCESS_CODE=... deploy/deploy.sh <project> <region> demo
-```
+The pilot deploys to **Render (free plan) plus a Cloudflare R2 bucket (free tier)** from
+`render.yaml`. See D2 and "Deploy" in [the design doc](docs/designs/mock-call-pilot.md).
 
-The script creates the bucket, secrets and service account it needs, deploys to Cloud Run, and
-checks that the service is reachable without a login.
+### Render environment variables
+
+Names only. Values go in the Render dashboard, never in the repo.
+
+| Variable | Needed for | Notes |
+|---|---|---|
+| `R2_ACCOUNT_ID` | demo and live | Cloudflare account id; the endpoint is `https://<id>.r2.cloudflarestorage.com` |
+| `R2_BUCKET` | demo and live | private bucket name |
+| `R2_ACCESS_KEY_ID` | demo and live | R2 API token with Object Read & Write on that bucket |
+| `R2_SECRET_ACCESS_KEY` | demo and live | from the same R2 API token |
+| `ACCESS_CODE` | demo and live | shared code in the call link (`/call?code=...`) |
+| `ELEVENLABS_API_KEY` | live only | Scribe transcription |
+| `ANTHROPIC_API_KEY` | live only | line picker (`claude-opus-5-5`, effort `low`) |
+| `MODE` | set in render.yaml | `demo` now; `live` once every gap is filled |
+| `STT`, `PICKER` | set in render.yaml | `fake` in demo; delete both for live |
+
+No public R2 URL is needed: audio is served through presigned links that need no login.
+Demo mode needs only the R2 variables and `ACCESS_CODE`. Recordings need R2 even in demo
+mode, because Render's free disk is wiped on every restart and sleep.
+
+`deploy/deploy.sh` (Google Cloud) is the superseded deploy path and is not used.
+

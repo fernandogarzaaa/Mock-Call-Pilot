@@ -1,0 +1,35 @@
+# Render Blueprint for the mock-call pilot (decision D2, 2026-11-21).
+# Free plan only: no paid plan, no credit card. Secrets are entered in the Render dashboard
+# (sync: false) and never stored here.
+services:
+  - type: web
+    name: mock-call-pilot
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: feat/mock-call-pilot
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      # Demo mode: placeholder content, banner on every page, fake speech-to-text and picker.
+      # For live mode see "Render environment variables" in README.md.
+      - key: MODE
+        value: demo
+      - key: STT
+        value: fake
+      - key: PICKER
+        value: fake
+      # Render's free disk is wiped on every restart and sleep, so recordings live in R2.
+      - key: STORAGE
+        value: r2
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: ACCESS_CODE
+        sync: false
