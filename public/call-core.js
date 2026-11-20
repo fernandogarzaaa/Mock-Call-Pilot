@@ -122,6 +122,15 @@ export const HEARD_DB = -45;
 export const METER_FLOOR_DB = -70;
 export const MIC_CHECK_PATIENCE_MS = 6000;
 
+/**
+ * What to ask the browser for: the default microphone, or one chosen in the picker.
+ * Anything that is not a device id (a click event, say) means the default.
+ */
+export function micConstraints(deviceId) {
+  if (typeof deviceId !== "string" || deviceId === "") return { audio: true };
+  return { audio: { deviceId: { exact: deviceId } } };
+}
+
 /** Peak level of time-domain samples (-1..1) in dBFS; -Infinity for digital silence. */
 export function peakDb(samples) {
   let peak = 0;
