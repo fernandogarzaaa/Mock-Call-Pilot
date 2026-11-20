@@ -1,0 +1,309 @@
+/* Mobile first: every control stays visible from 360 CSS px with no horizontal scroll. */
+:root {
+  --ink: #1b1f24;
+  --muted: #5a6370;
+  --line: #d5dae1;
+  --accent: #1f5fbf;
+  --danger: #b3261e;
+  --paper: #ffffff;
+  --wash: #f4f6f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--wash);
+  color: var(--ink);
+  font:
+    16px / 1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+h2 {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+p {
+  margin: 0.5rem 0;
+}
+
+.text {
+  white-space: pre-wrap;
+}
+
+.notice {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.demo-banner {
+  padding: 0.5rem 1rem;
+  background: #fff4c2;
+  border-bottom: 1px solid #e0c85a;
+  color: #4d3b00;
+  font-weight: 600;
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+input[type="text"] {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: inherit;
+  font: inherit;
+}
+
+.tick {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.tick input {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.tick label {
+  margin: 0;
+  font-weight: 400;
+}
+
+button {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+button.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 3px solid #f2a900;
+  outline-offset: 2px;
+}
+
+form button,
+section > button {
+  margin-top: 1rem;
+}
+
+.error {
+  min-height: 1.5em;
+  margin: 0.5rem 0 0;
+  color: var(--danger);
+}
+
+.hint,
+.status {
+  color: var(--muted);
+}
+
+.timer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.clock {
+  font-variant-numeric: tabular-nums;
+}
+
+.prospect-lines {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prospect-lines li {
+  margin: 0 0 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--muted);
+}
+
+.prospect-lines li.latest {
+  border-color: var(--accent);
+  color: var(--ink);
+  font-size: 1.15rem;
+}
+
+.status {
+  min-height: 1.5em;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.controls button {
+  flex: 1 1 6rem;
+  margin: 0;
+}
+
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.link-row input {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.link-row button {
+  flex: none;
+  margin: 0;
+}
+
+/* Recording page (server-rendered, shares this stylesheet). */
+.recording dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.recording dt {
+  color: var(--muted);
+}
+
+.recording dd {
+  margin: 0;
+}
+
+audio {
+  display: block;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.turns {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.turn {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.turn[data-cause] {
+  border-color: #d99a00;
+  background: #fffaf0;
+}
+
+.approved-reply {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: var(--wash);
+}
+
+/* Practice and final call are told apart by colour and words, never by colour alone. */
+button.final {
+  background: #5b2a86;
+  border-color: #5b2a86;
+  color: #ffffff;
+}
+
+.choice {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.final-choice {
+  border-color: #5b2a86;
+}
+
+.mode {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.practice-mode {
+  background: #e6f4ea;
+  border: 1px solid #5c9e6c;
+  color: #1e4d2b;
+}
+
+.final-mode {
+  background: #efe6f7;
+  border: 1px solid #5b2a86;
+  color: #3b1a59;
+}

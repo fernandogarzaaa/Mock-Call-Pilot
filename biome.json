@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!docs",
+      "!node_modules",
+      "!.skein",
+      "!.data",
+      "!reports",
+      "!.stryker-tmp",
+      "!pnpm-lock.yaml"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "useImportType": "error"
+      },
+      "correctness": {
+        "useImportExtensions": "error"
+      }
+    }
+  }
+}

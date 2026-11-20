@@ -1,0 +1,144 @@
+{
+  "persona": {
+    "firstName": null,
+    "companyName": null,
+    "fleetSize": null
+  },
+  "stages": ["d1_attention", "d2_lawsuit", "fleet_check", "d3_pitch", "d4_schedule"],
+  "lines": [
+    {
+      "id": "d1.who",
+      "stage": "d1_attention",
+      "text": "Who is this...",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.busy",
+      "stage": "d1_attention",
+      "text": "I'm busy.",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.badtime",
+      "stage": "d1_attention",
+      "text": "This is a bad time.",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.okay",
+      "stage": "d1_attention",
+      "text": "Okay.",
+      "nextStage": "d2_lawsuit",
+      "approved": true
+    },
+    {
+      "id": "d2.listen",
+      "stage": "d2_lawsuit",
+      "text": "PLACEHOLDER d2.listen: not client-approved",
+      "nextStage": "d2_lawsuit",
+      "approved": false
+    },
+    {
+      "id": "d2.next",
+      "stage": "d2_lawsuit",
+      "text": "PLACEHOLDER d2.next: not client-approved",
+      "nextStage": "fleet_check",
+      "approved": false
+    },
+    {
+      "id": "fc.count",
+      "stage": "fleet_check",
+      "text": "PLACEHOLDER fc.count: not client-approved",
+      "nextStage": "d3_pitch",
+      "approved": false
+    },
+    {
+      "id": "d3.consider",
+      "stage": "d3_pitch",
+      "text": "PLACEHOLDER d3.consider: not client-approved",
+      "nextStage": "d3_pitch",
+      "approved": false
+    },
+    {
+      "id": "d3.agree",
+      "stage": "d3_pitch",
+      "text": "PLACEHOLDER d3.agree: not client-approved",
+      "nextStage": "d4_schedule",
+      "approved": false
+    },
+    {
+      "id": "d3.hangup",
+      "stage": "d3_pitch",
+      "text": "PLACEHOLDER d3.hangup: not client-approved",
+      "nextStage": "d3_pitch",
+      "approved": false,
+      "endsCall": "prospect_ended"
+    },
+    {
+      "id": "d4.time",
+      "stage": "d4_schedule",
+      "text": "PLACEHOLDER d4.time: not client-approved",
+      "nextStage": "d4_schedule",
+      "approved": false
+    },
+    {
+      "id": "d4.seeinvite",
+      "stage": "d4_schedule",
+      "text": "PLACEHOLDER d4.seeinvite: not client-approved",
+      "nextStage": "d4_schedule",
+      "approved": false,
+      "endsCall": "booked"
+    }
+  ],
+  "objections": [
+    {
+      "id": "obj.busy",
+      "prospectLine": "PLACEHOLDER obj.busy: not client-approved",
+      "callerReply": "PLACEHOLDER obj.busy.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    },
+    {
+      "id": "obj.notinterested",
+      "prospectLine": "PLACEHOLDER obj.notinterested: not client-approved",
+      "callerReply": "PLACEHOLDER obj.notinterested.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    },
+    {
+      "id": "obj.havetelematics",
+      "prospectLine": "PLACEHOLDER obj.havetelematics: not client-approved",
+      "callerReply": "PLACEHOLDER obj.havetelematics.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    },
+    {
+      "id": "obj.sendinfo",
+      "prospectLine": "PLACEHOLDER obj.sendinfo: not client-approved",
+      "callerReply": "PLACEHOLDER obj.sendinfo.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    },
+    {
+      "id": "obj.nobudget",
+      "prospectLine": "PLACEHOLDER obj.nobudget: not client-approved",
+      "callerReply": "PLACEHOLDER obj.nobudget.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    },
+    {
+      "id": "obj.callback",
+      "prospectLine": "PLACEHOLDER obj.callback: not client-approved",
+      "callerReply": "PLACEHOLDER obj.callback.reply: not client-approved",
+      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "approved": false
+    }
+  ],
+  "fallbackLine": {
+    "text": "PLACEHOLDER fallback: not client-approved",
+    "approved": false
+  }
+}

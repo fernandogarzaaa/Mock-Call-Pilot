@@ -1,7 +1,7 @@
 # Mock-call pilot: Can-Am Telematics prospecting
 
 *   **Author:** Fernando Garza (Rhino Squad)
-*   **Status:** Proposed (review complete, awaiting approval)
+*   **Status:** Approved (2026-11-19, Fernando; placeholder prospect lines only)
 *   **Date:** 2026-11-19
 *   **Sources:** [source_brief.md](source_brief.md) (verbatim brief),
     [concepts_brief.md](concepts_brief.md), [client_and_role_sources.md](client_and_role_sources.md)
@@ -79,7 +79,8 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
 *   AI scoring, grading or rating of any kind. Harold scores manually.
 *   The AI speaking (voice AI). Phase 2.
 *   A booking or scheduling system (pending gap 2).
-*   Retry or restart of a call. Possible future addition; not built.
+*   Redo of the final call. Only practice calls can be redone (D4).
+*   Recording, storing or linking practice calls (D4).
 *   The under-10 fleet branch, the Lost jobs and Growing pains paths, the cold voicemail, and
     the follow-up email.
 *   A results dashboard, reviewer accounts or an admin UI.
@@ -99,9 +100,22 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   **Accepted trade-off (2026-11-19, Fernando):** the recording link is handed to the
         candidate. A candidate who shares it can give later candidates the approved replies.
         Fernando reviewed this and kept D1 as written.
-*   **D2, the stack (2026-11-19, Fernando).**
-    *   Google Cloud: Cloud Run for the app, one Cloud Storage bucket for audio and session
-        files, and Secret Manager for API keys.
+*   **D2, the stack (2026-11-19, Fernando; hosting changed 2026-11-21, Inan).**
+    *   **Hosting, from 2026-11-21:** one Render web service on the free plan, running the
+        repo's Dockerfile, and one private Cloudflare R2 bucket (free tier) for audio and
+        session files. API keys and R2 credentials are Render environment variables.
+        *   *Why:* both are $0. The pilot is one persistent Node server, which Render runs as
+            is. Vercel Hobby was ruled out: it caps WebSocket connections at 300 seconds and is
+            for non-commercial personal use only, and this is a business pilot.
+        *   *Render free limits:* 512 MB RAM and 750 instance hours a month. The service sleeps
+            after 15 minutes idle and takes about 1 minute to wake, so the first visitor after
+            a quiet spell waits. There is no persistent disk: anything written locally is lost
+            on restart or sleep, so recordings must live in R2. Free plan means one instance.
+        *   *R2 free limits:* 10 GB storage, 1 million writes and 10 million reads a month, free
+            egress. It is S3-compatible, so the server talks to it with signed S3 requests.
+        *   *Superseded (2026-11-19 to 2026-11-21):* Google Cloud, Cloud Run plus a Cloud
+            Storage bucket and Secret Manager. The `gcs` adapter and `deploy/deploy.sh` stay in
+            the repo but are no longer the deploy path.
     *   Node 26 and pnpm, as a standalone project. It shares no code or infrastructure with
         other Rhino Squad repositories.
     *   Speech-to-text defaults to ElevenLabs Scribe, and line choice to Claude. They sit behind
@@ -125,6 +139,25 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   *Prospect:* fictitious, not a real person. Rhieza will send the details. They are not
         invented here.
 
+*   **D4, practice mode and Redo (2026-11-21, Fernando).** The retry request is confirmed,
+    as practice mode plus a Redo button.
+    *   From the Ready screen the candidate can start any number of practice calls. A practice
+        call uses the same prospect, script, picker and time limit as the final call.
+    *   Practice calls are not recorded and not stored: no full-call recorder runs, no session
+        folder is created and no link is made. The page holds the practice state and sends it
+        back with each turn to `POST /api/practice/turn`, so the server stays stateless (see
+        Sessions and concurrency). Each turn's audio still goes to speech-to-text and the
+        picker, because the prospect has to answer; the practice label says so.
+    *   A practice call shows a "PRACTICE CALL: not recorded, not saved, does not count" label,
+        a **Redo** button that drops the call and starts a fresh one, and **End practice**,
+        which returns to Ready.
+    *   The final call is chosen with **Make my final call**, then a confirm screen with a tick
+        box ("I am ready to make my final call") and **Start final call**, or **Back to
+        practice**. It shows a "FINAL CALL: recorded and graded" label and has no Redo. Its
+        recording, link and grading are unchanged.
+    *   Practice and final are told apart by words as well as colour (green practice label,
+        purple final label and button).
+
 ## Open Questions
 
 The list of unanswered gaps from the brief is kept in one place,
@@ -147,8 +180,9 @@ The list of unanswered gaps from the brief is kept in one place,
 *   **Q4, abandoned calls.** If the candidate closes the tab mid-call, is a recording link still
     produced? Today nothing is uploaded and no link exists. A "yes" means adding chunked uploads
     during the call (see Future Improvements).
-*   **Q5, one call per candidate.** A candidate who has the shared access code can start more
-    than one call. The pilot doesn't build retry, but it also doesn't block a second start.
+*   **Q5, one final call per candidate.** Practice is unlimited by design (D4). The page offers
+    one final call with no Redo, but the server does not enforce it: a candidate who reloads the
+    page with the shared access code can start a second final call, and gets a second link.
     Should each candidate get their own single-use code? The answer depends on gaps 1 and 2.
     Until then, the recording page shows the candidate name and start time, so Harold can spot
     duplicates.
@@ -165,6 +199,16 @@ The list of unanswered gaps from the brief is kept in one place,
 *   **Then**: the call ends with reason `booked`. The page shows "Uploading", then the recording
     link. The link opens a page with the full audio, the candidate's transcript and the
     prospect's lines in order.
+
+### CUJ 6: Candidate practises, redoes, then makes the final call
+
+*   **Given**: the candidate has allowed the microphone and is on the Ready screen.
+*   **When**: they press **Start practice call**, speak a few turns, press **Redo**, practise
+    again to the end, then press **Make my final call**, tick the confirm box and press
+    **Start final call**.
+*   **Then**: Redo shows an empty call with the opening hint and a fresh timer. No practice call
+    creates a session folder or a link. The final call shows no Redo, and only it ends with the
+    recording link.
 
 ### CUJ 2: Prospect pushes back and the candidate circles back
 
@@ -202,8 +246,10 @@ The list of unanswered gaps from the brief is kept in one place,
 
 ### Components
 
-There is one Node 26 TypeScript server on Cloud Run and one static browser page. There is no
-database: each session is a folder of objects in one Cloud Storage bucket. There is no build
+There is one Node 26 TypeScript server on Render and one static browser page. There is no
+database: each session is a folder of objects in one R2 bucket (`STORAGE=r2`). The diagram and
+some sections below still say Cloud Run and Cloud Storage; since D2 changed on 2026-11-21, read
+them as Render and R2. Section "Deploy" and Risk 7 describe the differences. There is no build
 step either. Node 26 strips TypeScript types at load time and runs `.ts` files directly, and the
 browser page is plain JavaScript.
 
@@ -322,6 +368,12 @@ At End, the page uploads that one file with `/end`, so Harold gets one unbroken 
     *   `ACCESS_CODE` is one shared value from the environment, so random visitors can't start
         calls and spend API credits.
     *   Re-runs by the same candidate are Q5.
+    *   Practice calls (D4) create no session. `POST /api/practice` returns a fresh state
+        without writing anything, and the page sends that state back with each turn. The server
+        checks every field against the script (known stage, objection and line ids, turn
+        indexes in order) and answers 422 to anything else. It strips caller replies before
+        returning the new state, so D1 holds in practice too. Because the page holds the state,
+        a lost response is harmless: resending recomputes the same turn.
 *   **Session state.** All of it lives in `sessions/<id>/state.json`: stage, turns, used
     objections, start and end times, and end reason.
     *   Each turn reads the file and writes it back with a Cloud Storage generation
@@ -415,7 +467,27 @@ and must tick "I understand this call is recorded".
 
 ### Deploy
 
-`deploy/deploy.sh` wraps `gcloud`:
+**From 2026-11-21 (D2): Render plus R2.** `render.yaml` is a Render Blueprint for one free web
+service. It builds the repo's Dockerfile from branch `feat/mock-call-pilot`, uses `/healthz` as
+the health check, and starts in demo mode with fake speech-to-text and picker. Render sets
+`PORT` and terminates TLS, sending `X-Forwarded-Proto: https`, so links start with `https://`.
+
+*   **Storage, `src/storage/r2.ts`.** It implements the same `Storage` interface as the other
+    adapters, through R2's S3 API signed with `aws4fetch`.
+    *   `getJson` is one GET; the object's ETag stands in for the Cloud Storage generation.
+    *   `putJson` writes with `If-None-Match: *` for a new object (generation `"0"`) and
+        `If-Match: <ETag>` otherwise. R2 answers 412 to a lost condition and 409 to a
+        concurrent conditional write; both become `PreconditionFailed`.
+    *   `readUrl` returns a presigned GET valid for 1 hour. The bucket stays private and no
+        public R2 URL is needed: the recording page links to `/r/<id>/audio`, which redirects
+        to a fresh presigned URL, so the link works without a login.
+*   **Retention.** R2 has no deploy script here. Set an object lifecycle rule on the bucket in
+    the Cloudflare dashboard (delete after `gaps.retentionDays` days) before live mode. Nothing
+    checks that the rule matches the config.
+*   **Environment.** Listed in README.md, "Render environment variables". Secrets are entered in
+    the Render dashboard (`sync: false`) and never committed.
+
+**Superseded (Google Cloud, kept for reference).** `deploy/deploy.sh` wraps `gcloud`:
 
 *   It creates the bucket as private.
 *   It reads `gaps.retentionDays` from `config/pilot.json` and sets the matching deletion rule.
@@ -452,6 +524,16 @@ no cloud account.
     two (scaffold item 7).
 6.  **Upload at End.** Nothing is saved until End. Closing the tab mid-call loses the audio
     (Q4).
+7.  **Render free tier (D2).**
+    *   *Cold start:* after 15 minutes idle the first request takes about 1 minute. A candidate
+        opening the call link, or Harold opening a recording link, may wait that long. A
+        session in progress keeps the service awake.
+    *   *One instance, 512 MB:* all simultaneous calls share one process. `/end` holds each
+        upload (up to 25 MB) in memory, so about 10 calls ending in the same second could use
+        around 250 MB. The CUJ 4 load run (10 sessions) checks this on the deployed service.
+    *   *750 hours a month* covers one service running all month.
+    *   *Request size:* Render's limit on request bodies has not been measured; the 25 MB `/end`
+        limit assumes it is higher. The deployed load run is the check.
 
 ## Alternatives Considered
 
@@ -548,7 +630,6 @@ no cloud account.
 
 ### Future Improvements
 
-*   Retry or restart of a call (requested by Rhieza, not confirmed).
 *   Voice AI prospect (phase 2), which would make hands-free turns (Alternative B) worth it.
 *   Chunked uploads during the call, so abandoned calls keep their audio (only if Q4 says
     yes).
@@ -577,10 +658,10 @@ Everything that two or more units must agree on is fixed in the scaffold, before
 starts. Units never edit `package.json`, `pnpm-workspace.yaml`, `tsconfig.json`, `src/types/`
 or `config/`.
 
-The build runs in waves. The main thread adds a wave's nodes to skein only after the previous
-wave is shipped onto the feature branch (`skein ship --all`). Each new worktree therefore
-branches from a feature branch that already holds its dependencies' code. The main thread checks
-this with `git log` before starting each wave. The waves are:
+The build runs in waves set by the `depends on` column. skein bases a dependent node's
+worktree on its dependency's result commit (one dependency) or on an integration branch of all
+its dependencies (several), so it contains its dependencies' code. This was checked in skein's
+`worktree.py` (`base_branch_for`) on 2026-11-19. The waves are:
 
 1.  config, script, picker, stt, storage
 2.  server
@@ -632,7 +713,12 @@ this with `git log` before starting each wave. The waves are:
 *   **`stryker.config.json`:** `testRunner: "vitest"`, `coverageAnalysis: "perTest"`,
     `mutate: ["src/**/*.ts", "deploy/load-check.ts", "public/call-core.js",
     "!src/**/*.test.ts", "!src/server/main.ts"]`,
-    `thresholds.break: 70`, `ignorePatterns: [".skein", "docs"]`.
+    `thresholds.break: 70`, `ignorePatterns: [".skein", "docs"]`,
+    `plugins: ["@stryker-mutator/vitest-runner"]` (pnpm's strict `node_modules` hides it from
+    discovery), `tempDirName: ".stryker-tmp"`, and `tsconfigFile` pointed at a missing file to
+    skip Stryker's tsconfig step, which calls an API TypeScript 7 no longer exports. Test data
+    (`src/script/fixture.ts`) is excluded from `mutate`. testteeth uses
+    `stryker.testteeth.json`, the same config plus `vitest.related: false`.
 
 #### 3. `src/types/index.ts` (Create)
 
@@ -776,7 +862,8 @@ because `erasableSyntaxOnly` rejects those.
     1.  `FROM node:26-slim`, `WORKDIR /app`, `ENV NODE_ENV=production`.
     2.  `RUN npm install -g pnpm@12.15.0`. Node 26 images ship no corepack (checked on Node
         26.13.0).
-    3.  `COPY package.json pnpm-lock.yaml ./`, then `RUN pnpm install --prod --frozen-lockfile`.
+    3.  `COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./`, then
+        `RUN pnpm install --prod --frozen-lockfile`.
     4.  `COPY src ./src`, `COPY config ./config`, `COPY public ./public`. Each directory needs
         its own line, because Docker copies a directory's contents, not the directory.
     5.  `CMD ["node", "src/server/main.ts"]`.
@@ -1007,7 +1094,8 @@ writes that decision into item 14 before the web unit starts.
     *   builds the adapters from `STORAGE`, `STT` and `PICKER`, including
         `new FakePicker(config.script)` or `new ClaudePicker(client, model, effort,
         systemPrompt(config.script))`;
-    *   serves on `PORT`.
+    *   serves on `PORT`, bound to `0.0.0.0`. The default dual-stack bind let a kernel-picked
+        test port collide with another process's `127.0.0.1` socket.
 *   **Libraries:**
     *   `hono/html` for escaped templates;
     *   `hono/body-limit` (25 MB on `/end`, 2 MB on `/turn`);
@@ -1027,6 +1115,8 @@ writes that decision into item 14 before the web unit starts.
 | `GET /call` | `?code=` | The call page shell (`<script type="module" src="/static/call.js">`, `<link href="/static/call.css">`, the config texts in a JSON `<script>` block) or a 403 page. Never includes `callerReply`. |
 | `GET /static/*` | (none) | Files from `public/`. |
 | `POST /api/sessions` | JSON `{ code, name }` | Sent when the candidate presses Start. 201 `{ id, maxCallMinutes }` and `state.json` created with `ifGeneration "0"`. 403 bad code; 422 name not 1-80 characters after trimming. |
+| `POST /api/practice` | JSON `{ code }` | D4. 201 `{ state, maxCallMinutes }`, where `state` is `{ stage, usedObjections: [], turns: [], startedAt }`. Writes nothing. 403 bad code. |
+| `POST /api/practice/turn` | multipart `audio`, `mime`, `clientMs`, `code`, `state` (JSON) | D4. Validates `state` (422 if any field is off), 409 `ended` if it already has an end reason, then runs `turnStep` exactly as `/api/s/:id/turn` does. 200 `{ text, ended, endReason?, state }`, with caller replies removed from `state`. Reads and writes no storage. 403 bad code. |
 | `POST /api/s/:id/turn` | multipart `audio`, `mime`, `turnIndex`, `clientMs` | Reads the state. First, if `turnIndex < turns.length`, returns that stored turn's result: its prospect text, plus `ended`/`endReason` if that turn ended the call. Then 409 `{error:"ended"}` if the call has ended, and 409 `{error:"gap"}` if `turnIndex > turns.length`. Otherwise it transcribes (catching `TranscribeError`), runs `turnStep`, and writes with the read generation. On `PreconditionFailed` it re-reads: if the index is now stored, it returns that result; otherwise 409 `{error:"conflict"}`. 200 `{ text, ended, endReason? }`. The response never carries `callerReply`. |
 | `POST /api/s/:id/end` | multipart `audio`, `mime`, `reason` | The server decides the end reason: keep `state.endReason` if set; else `limit_reached` if the limit passed; else accept `candidate_ended` or `limit_reached` from the client (422 otherwise). If `audio` is already stored, it returns the stored URL without rewriting. Otherwise it stores `sessions/<id>/audio.<ext>` (MIME without parameters: `audio/mp4` gives `mp4`, `audio/webm` gives `webm`, `audio/ogg` gives `ogg`, anything else 422), writes `transcript.json` (a `Transcript`), then writes `state.json` with `audio`, `endReason` and `endedAt` under the generation precondition, re-reading once on `PreconditionFailed`. 200 `{ url: "<scheme>://<host>/r/<id>" }` (scheme rule above). |
 | `GET /r/:id` | (none) | The recording page, or "Call in progress" while `state.audio` is unset, or 404. |
@@ -1076,9 +1166,12 @@ writes that decision into item 14 before the web unit starts.
 *   **`call-core.js`:** pure functions with no DOM.
     *   `pickMimeType(isTypeSupported)`: the first supported of `audio/mp4`,
         `audio/webm;codecs=opus`, `audio/ogg;codecs=opus`.
-    *   `nextScreen(screen, event)`: the screen order `name → brief → mic → ready → call →
-        uploading → done`, plus `uploading → retry`. `brief` shows client summary, task
-        instructions and notice, and needs the tick.
+    *   `nextScreen(screen, event)`: the screen order `name → brief → mic → ready → confirm →
+        call → uploading → done`, plus `uploading → retry`, `ready ⇄ practice` and
+        `confirm → ready` (Back). `brief` shows client summary, task instructions and notice,
+        and needs the tick. `confirm → call` needs `confirmed: true` (D4).
+    *   `callControls(screen)`: `practice` gets Speak, Done, Redo, End; `call` gets Speak,
+        Done, End, with no Redo.
     *   `postWithRetry(fetchFn, url, form, attempts = 3)`: retries only on network errors and
         5xx, with 1 s and 2 s waits.
     *   `onTurnError(status, body)` maps a turn failure to the page's next action:
@@ -1105,6 +1198,11 @@ writes that decision into item 14 before the web unit starts.
         says the recording is too large to upload and offers **Download recording**. Otherwise it posts
         `/end`. On failure it shows **Retry upload** with the blob kept in memory.
     *   **Done screen:** the link with a Copy button.
+    *   **Practice (D4):** **Start practice call** calls `POST /api/practice`, starts the
+        timer and no full-call recorder. Turns go to `/api/practice/turn` with the held state.
+        **Redo** and the end of a practice call bump a call counter, so late answers to the old
+        call are dropped, and keep the microphone open. The end of a practice call returns to
+        Ready with a one-line note of how it ended.
 *   **`call.css`:** works from 360 CSS px wide with no horizontal scroll and every control
     visible.
 *   **Tests (`call-core.test.js`):**

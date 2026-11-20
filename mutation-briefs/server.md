@@ -1,0 +1,107 @@
+# Mutation brief: server
+
+Each entry is a code change that no current test detects. Write or tighten a test that asserts
+behaviour a caller can observe and fails under that change. If a mutant cannot change observable
+behaviour (an equivalent mutant, or text only seen in a log), do not test it: list it under
+'## Equivalent' at the end of this file with a one-line reason. Do not change production behaviour
+except to fix a real bug a new test exposes; describe any such fix under '## Bugs fixed'.
+
+- `src/server/app.ts:22` in `buildApp`, survived: Regex: `/^\/static/` -> `/\/static/`
+- `src/server/app.ts:28` in `buildApp`, survived: StringLiteral: `"Not found"` -> `""`
+- `src/server/app.ts:28` in `buildApp`, survived: StringLiteral: `"There is nothing at this address."` -> `""`
+- `src/server/app.ts:31` in `buildApp`, survived: CallExpression: `console.error(error);` -> `;`
+- `src/server/routes.ts:39` in `<module>`, survived: Regex: `/^[A-Za-z0-9_-]{22}$/` -> `/[A-Za-z0-9_-]{22}$/` **KILLED** (app.test.ts, "answers 404, not a storage error, when a real id is prefixed with a path")
+- `src/server/routes.ts:39` in `<module>`, survived: Regex: `/^[A-Za-z0-9_-]{22}$/` -> `/^[A-Za-z0-9_-]{22}/`
+- `src/server/routes.ts:55` in `codeMatches`, survived: ConditionalExpression: `expected === ""` -> `false`
+- `src/server/routes.ts:55` in `codeMatches`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:64` in `recordingUrl`, survived: OptionalChaining: `c.req.header("x-forwarded-proto")?.sp...` -> `c.req.header("x-forwarded-proto")?.sp...`
+- `src/server/routes.ts:64` in `recordingUrl`, survived: MethodExpression: `c.req.header("x-forwarded-proto")?.sp...` -> `c.req.header("x-forwarded-proto")?.sp...`
+- `src/server/routes.ts:65` in `recordingUrl`, survived: ConditionalExpression: `forwarded === "http"` -> `false`
+- `src/server/routes.ts:65` in `recordingUrl`, survived: StringLiteral: `"http"` -> `""`
+- `src/server/routes.ts:71` in `baseMime`, survived: MethodExpression: `(mime.split(";")[0] ?? "").trim()` -> `mime.split(";")[0] ?? ""`
+- `src/server/routes.ts:71` in `baseMime`, no_coverage: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:75` in `nonNegativeNumber`, survived: ConditionalExpression: `typeof value !== "string"` -> `false`
+- `src/server/routes.ts:75` in `nonNegativeNumber`, survived: Regex: `/^\d+(\.\d+)?$/` -> `/\d+(\.\d+)?$/`
+- `src/server/routes.ts:75` in `nonNegativeNumber`, survived: Regex: `/^\d+(\.\d+)?$/` -> `/^\d+(\.\d+)?/`
+- `src/server/routes.ts:75` in `nonNegativeNumber`, survived: Regex: `/^\d+(\.\d+)?$/` -> `/^\d+(\.\d)?$/`
+- `src/server/routes.ts:75` in `nonNegativeNumber`, survived: Regex: `/^\d+(\.\d+)?$/` -> `/^\d+(\.\D+)?$/`
+- `src/server/routes.ts:80` in `turnIndexOf`, survived: ConditionalExpression: `typeof value !== "string"` -> `false`
+- `src/server/routes.ts:80` in `turnIndexOf`, survived: Regex: `/^\d+$/` -> `/^\d+/`
+- `src/server/routes.ts:88` in `readForm`, no_coverage: BlockStatement: `{ // A malformed body is the client's...` -> `{}`
+- `src/server/routes.ts:90` in `readForm`, no_coverage: ConditionalExpression: `error instanceof TypeError` -> `true`
+- `src/server/routes.ts:90` in `readForm`, no_coverage: ConditionalExpression: `error instanceof TypeError` -> `false`
+- `src/server/routes.ts:112` in `storedResult`, survived: OptionalChaining: `line?.endsCall` -> `line.endsCall`
+- `src/server/routes.ts:128` in `<module>`, survived: Regex: `/^bytes=(\d*)-(\d*)$/` -> `/bytes=(\d*)-(\d*)$/`
+- `src/server/routes.ts:128` in `<module>`, survived: Regex: `/^bytes=(\d*)-(\d*)$/` -> `/^bytes=(\d*)-(\d*)/`
+- `src/server/routes.ts:129` in `<module>`, survived: ConditionalExpression: `match[1] === "" && match[2] === ""` -> `false`
+- `src/server/routes.ts:129` in `<module>`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:129` in `<module>`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:136` in `<module>`, survived: ConditionalExpression: `start <= end` -> `true`
+- `src/server/routes.ts:136` in `<module>`, survived: EqualityOperator: `start <= end` -> `start < end`
+- `src/server/routes.ts:136` in `<module>`, survived: LogicalOperator: `start <= end && start < size` -> `start <= end || start < size`
+- `src/server/routes.ts:136` in `<module>`, survived: ConditionalExpression: `start < size` -> `true`
+- `src/server/routes.ts:136` in `<module>`, survived: EqualityOperator: `start < size` -> `start <= size`
+- `src/server/routes.ts:140` in `isFileStore`, survived: LogicalOperator: `"verify" in storage && "read" in storage` -> `"verify" in storage || "read" in storage`
+- `src/server/routes.ts:154` in `registerRoutes`, survived: StringLiteral: `"Access code needed"` -> `""`
+- `src/server/routes.ts:154` in `registerRoutes`, survived: StringLiteral: `"Check the call link."` -> `""`
+- `src/server/routes.ts:176` in `registerRoutes`, survived: ConditionalExpression: `typeof body === "object"` -> `true`
+- `src/server/routes.ts:176` in `registerRoutes`, survived: ConditionalExpression: `typeof body === "object" && body !== ...` -> `true`
+- `src/server/routes.ts:176` in `registerRoutes`, survived: LogicalOperator: `typeof body === "object" && body !== ...` -> `typeof body === "object" || body !== ...`
+- `src/server/routes.ts:176` in `registerRoutes`, survived: ConditionalExpression: `body !== null` -> `true`
+- `src/server/routes.ts:177` in `registerRoutes`, survived: ObjectLiteral: `{ error: "bad_code" }` -> `{}`
+- `src/server/routes.ts:177` in `registerRoutes`, survived: StringLiteral: `"bad_code"` -> `""`
+- `src/server/routes.ts:180` in `registerRoutes`, survived: ObjectLiteral: `{ error: "bad_name" }` -> `{}`
+- `src/server/routes.ts:180` in `registerRoutes`, survived: StringLiteral: `"bad_name"` -> `""`
+- `src/server/routes.ts:187` in `registerRoutes`, survived: LogicalOperator: `config.script.stages[0] ?? "d1_attent...` -> `config.script.stages[0] && "d1_attent...`
+- `src/server/routes.ts:187` in `registerRoutes`, no_coverage: StringLiteral: `"d1_attention"` -> `""`
+- `src/server/routes.ts:205` in `registerRoutes`, survived: ObjectLiteral: `{ error: "bad_request" }` -> `{}`
+- `src/server/routes.ts:205` in `registerRoutes`, survived: StringLiteral: `"bad_request"` -> `""`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: ConditionalExpression: `typeof form.mime === "string"` -> `true`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: EqualityOperator: `typeof form.mime === "string"` -> `typeof form.mime !== "string"`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: ConditionalExpression: `typeof form.mime === "string" && form...` -> `true`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: ConditionalExpression: `typeof form.mime === "string" && form...` -> `false`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: LogicalOperator: `typeof form.mime === "string" && form...` -> `typeof form.mime === "string" || form...`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: StringLiteral: `"string"` -> `""`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: ConditionalExpression: `form.mime !== ""` -> `true`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: EqualityOperator: `form.mime !== ""` -> `form.mime === ""`
+- `src/server/routes.ts:207` in `registerRoutes`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:207` in `registerRoutes`, no_coverage: StringLiteral: `"audio/webm"` -> `""`
+- `src/server/routes.ts:221` in `registerRoutes`, survived: ObjectLiteral: `{ text: "" }` -> `{}`
+- `src/server/routes.ts:221` in `registerRoutes`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:236` in `registerRoutes`, survived: ConditionalExpression: `!(error instanceof PreconditionFailed)` -> `false`
+- `src/server/routes.ts:238` in `registerRoutes`, survived: OptionalChaining: `again?.value` -> `again.value`
+- `src/server/routes.ts:243` in `registerRoutes`, survived: ArithmeticOperator: `step.state.turns.length - 1` -> `step.state.turns.length + 1`
+- `src/server/routes.ts:244` in `registerRoutes`, survived: ConditionalExpression: `last?.fallbackCause !== undefined && ...` -> `false`
+- `src/server/routes.ts:244` in `registerRoutes`, survived: ConditionalExpression: `last.index === turnIndex` -> `true`
+- `src/server/routes.ts:244` in `registerRoutes`, survived: EqualityOperator: `last.index === turnIndex` -> `last.index !== turnIndex`
+- `src/server/routes.ts:244` in `registerRoutes`, survived: BlockStatement: `{ const entry = { event: "fallback", ...` -> `{}`
+- `src/server/routes.ts:245` in `registerRoutes`, survived: ObjectLiteral: `{ event: "fallback", session: id, cau...` -> `{}`
+- `src/server/routes.ts:245` in `registerRoutes`, survived: StringLiteral: `"fallback"` -> `""`
+- `src/server/routes.ts:246` in `registerRoutes`, survived: CallExpression: `console.warn(JSON.stringify(entry));` -> `;`
+- `src/server/routes.ts:249` in `registerRoutes`, survived: ConditionalExpression: `step.ended` -> `true`
+- `src/server/routes.ts:263` in `registerRoutes`, survived: ConditionalExpression: `typeof form.mime === "string"` -> `true`
+- `src/server/routes.ts:263` in `registerRoutes`, no_coverage: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:265` in `registerRoutes`, survived: ObjectLiteral: `{ error: "bad_audio" }` -> `{}`
+- `src/server/routes.ts:265` in `registerRoutes`, survived: StringLiteral: `"bad_audio"` -> `""`
+- `src/server/routes.ts:272` in `registerRoutes`, survived: ObjectLiteral: `{ error: "bad_reason" }` -> `{}`
+- `src/server/routes.ts:272` in `registerRoutes`, survived: StringLiteral: `"bad_reason"` -> `""`
+- `src/server/routes.ts:296` in `registerRoutes`, survived: BlockStatement: `{ if (!(error instanceof Precondition...` -> `{}`
+- `src/server/routes.ts:297` in `registerRoutes`, survived: ConditionalExpression: `!(error instanceof PreconditionFailed)` -> `false`
+- `src/server/routes.ts:299` in `registerRoutes`, survived: ConditionalExpression: `!loaded` -> `false`
+- `src/server/routes.ts:300` in `registerRoutes`, survived: ConditionalExpression: `loaded.value.audio` -> `false`
+- `src/server/routes.ts:300` in `registerRoutes`, no_coverage: ObjectLiteral: `{ url: recordingUrl(c, id) }` -> `{}`
+- `src/server/routes.ts:312` in `registerRoutes`, survived: StringLiteral: `"Check back after the call."` -> `""`
+- `src/server/routes.ts:337` in `registerRoutes`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:337` in `registerRoutes`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/routes.ts:338` in `registerRoutes`, survived: ObjectLiteral: `{ error: "forbidden" }` -> `{}`
+- `src/server/routes.ts:338` in `registerRoutes`, survived: StringLiteral: `"forbidden"` -> `""`
+- `src/server/routes.ts:341` in `registerRoutes`, survived: ConditionalExpression: `!file` -> `false`
+- `src/server/views.ts:17` in `banner`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/views.ts:43` in `callShell`, survived: StringLiteral: `"Mock call"` -> `""`
+- `src/server/views.ts:47` in `messagePage`, survived: StringLiteral: ``<main><h1>${title}</h1><p>${text}</p...` -> ````
+- `src/server/views.ts:52` in `causeAttr`, survived: ConditionalExpression: `cause === undefined` -> `false`
+- `src/server/views.ts:52` in `causeAttr`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/views.ts:57` in `replyBox`, survived: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/views.ts:66` in `turnView`, no_coverage: StringLiteral: `"empty"` -> `""`
+- `src/server/views.ts:82` in `recordingPage`, no_coverage: StringLiteral: `""` -> `"Stryker was here!"`
+- `src/server/views.ts:95` in `recordingPage`, survived: StringLiteral: `"Mock call recording"` -> `""`

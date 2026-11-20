@@ -1,0 +1,9 @@
+node_modules
+.skein
+.git
+docs
+.env
+.data
+.stryker-tmp
+reports
+.claude

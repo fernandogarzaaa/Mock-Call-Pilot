@@ -1,0 +1,16 @@
+{
+  "gaps": {
+    "interviewFlow": null,
+    "testWindow": null,
+    "retentionDays": null,
+    "sourceLiveTest": null,
+    "taskInstructions": null,
+    "callerCompanyName": null,
+    "maxCallMinutes": null
+  },
+  "settings": {
+    "recordingNotice": "This mock call is recorded and transcribed. Your answers are processed by our speech-to-text and AI providers during the call. The recording and transcript are shared with the Rhino Squad hiring team and the client to review your Paid Test. Recordings are deleted after {retentionDays} days.",
+    "clientDetails": "Can-Am Wireless LLC (canamwireless.com) is a privately held, minority-owned company founded in 2001, with offices in Cedar Park and Austin, Texas, and Toronto, Ontario. It started in corporate wireless accessories and now supplies IT hardware, mobility services and fleet telematics to enterprise and government customers. Its fleet telematics work is a partnership with Geotab: GPS fleet tracking, reporting, AI dash cams and driver-distraction prevention.",
+    "demoMaxCallMinutes": 15
+  }
+}
