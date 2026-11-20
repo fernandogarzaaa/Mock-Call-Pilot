@@ -5,6 +5,7 @@ import {
   formatRemaining,
   LOST_MESSAGE,
   MAX_UPLOAD_BYTES,
+  NOT_SAVED_MESSAGE,
   nextScreen,
   onTurnError,
   pickMimeType,
@@ -284,20 +285,28 @@ describe("onTurnError", () => {
     expect(onTurnError(409, { error: "gap" })).toEqual({ action: "resend" });
     expect(onTurnError(409, { error: "conflict" })).toEqual({ action: "resend" });
   });
-  it("shows Connection lost when a gap or conflict happens again after the resend", () => {
-    const lost = { action: "lost", message: LOST_MESSAGE };
-    expect(onTurnError(409, { error: "gap" }, true)).toEqual(lost);
-    expect(onTurnError(409, { error: "conflict" }, true)).toEqual(lost);
+  it("says the turn was not saved when a gap or conflict happens again after the resend", () => {
+    const notSaved = { action: "lost", message: NOT_SAVED_MESSAGE };
+    expect(onTurnError(409, { error: "gap" }, true)).toEqual(notSaved);
+    expect(onTurnError(409, { error: "conflict" }, true)).toEqual(notSaved);
   });
-  it("shows Connection lost for everything else", () => {
+  it("says the turn was not saved for any other answer the server refused", () => {
+    const notSaved = { action: "lost", message: NOT_SAVED_MESSAGE };
+    expect(onTurnError(400, null)).toEqual(notSaved);
+    expect(onTurnError(413, { error: "too_large" })).toEqual(notSaved);
+    expect(onTurnError(422, { error: "bad_request" })).toEqual(notSaved);
+    expect(onTurnError(409, { error: "other" })).toEqual(notSaved);
+    expect(onTurnError(409, null)).toEqual(notSaved);
+    expect(onTurnError(499, null)).toEqual(notSaved);
+  });
+  it("shows Connection lost only when the network or the server failed", () => {
     const lost = { action: "lost", message: LOST_MESSAGE };
     expect(onTurnError(0, null)).toEqual(lost);
+    expect(onTurnError(399, null)).toEqual(lost);
     expect(onTurnError(503, null)).toEqual(lost);
-    expect(onTurnError(422, { error: "bad_request" })).toEqual(lost);
-    expect(onTurnError(409, { error: "other" })).toEqual(lost);
-    expect(onTurnError(409, null)).toEqual(lost);
     expect(onTurnError(200, { error: "gap" })).toEqual(lost);
     expect(onTurnError(500, { error: "ended" })).toEqual(lost);
+    expect(NOT_SAVED_MESSAGE).toBe("That turn could not be saved. Press Done to try again.");
   });
   it("words the message as the design says", () => {
     expect(LOST_MESSAGE).toBe("Connection lost. Check your connection and press Done again");

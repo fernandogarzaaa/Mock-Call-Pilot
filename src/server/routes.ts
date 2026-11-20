@@ -287,6 +287,7 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
       const again = await storage.getJson<SessionState>(stateKey(id));
       const winner = again?.value.turns[turnIndex];
       if (winner) return c.json(storedResult(config, winner));
+      console.warn(JSON.stringify({ event: "conflict", session: id, detail: error.message }));
       return c.json({ error: "conflict" }, 409);
     }
 
@@ -350,6 +351,7 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
         if (loaded.value.audio) return c.json({ url: recordingUrl(c, id) });
       }
     }
+    console.warn(JSON.stringify({ event: "conflict", session: id, detail: "end not saved" }));
     return c.json({ error: "conflict" }, 409);
   });
 

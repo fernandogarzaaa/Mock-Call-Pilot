@@ -37,6 +37,20 @@ const etag = (value: string, status = 200, body: string | null = null) =>
   new Response(body, { status, headers: { etag: value } });
 
 describe("R2Storage.getJson", () => {
+  it("asks for an uncompressed body and turns a weak ETag into the strong one", async () => {
+    const { storage, calls } = stub([etag('W/"abc"', 200, "{}"), etag('"next"')]);
+    const got = await storage.getJson("sessions/x/state.json");
+    expect(calls[0]?.headers["accept-encoding"]).toBe("identity");
+    expect(got?.generation).toBe('"abc"');
+    await storage.putJson("sessions/x/state.json", {}, got?.generation ?? "");
+    expect(calls[1]?.headers["if-match"]).toBe('"abc"');
+  });
+  it("names the R2 status when a conditional write is refused", async () => {
+    for (const status of [412, 409]) {
+      const { storage } = stub([new Response(null, { status })]);
+      await expect(storage.putJson("k", {}, '"abc"')).rejects.toThrow(`R2 answered ${status}`);
+    }
+  });
   it("returns the body and its ETag from one GET", async () => {
     const { storage, calls } = stub([etag('"abc"', 200, '{"stage":"d1_attention"}')]);
     const got = await storage.getJson<{ stage: string }>("sessions/x/state.json");
