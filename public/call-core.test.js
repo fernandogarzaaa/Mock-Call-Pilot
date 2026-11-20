@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   callControls,
+  callPhase,
   formatRemaining,
   LOST_MESSAGE,
   MAX_UPLOAD_BYTES,
@@ -9,7 +10,11 @@ import {
   pickMimeType,
   postWithRetry,
   recordingExtension,
+  STEPS,
+  stepFor,
+  TYPED_TURN_MAX_BYTES,
   tooLargeToUpload,
+  typedTurnBytes,
   validName,
 } from "./call-core.js";
 
@@ -97,7 +102,7 @@ describe("nextScreen", () => {
       ok,
       { type: "accept", noticeTicked: true },
       { type: "granted" },
-      { type: "final" },
+      { type: "final", hasMic: true },
       { type: "start", confirmed: true },
       { type: "end" },
       { type: "uploaded" },
@@ -127,7 +132,7 @@ describe("nextScreen", () => {
   it("blocks the final call until the candidate confirms", () => {
     expect(nextScreen("ready", { type: "start" })).toBe("ready");
     expect(nextScreen("ready", { type: "start", confirmed: true })).toBe("ready");
-    expect(nextScreen("ready", { type: "final" })).toBe("confirm");
+    expect(nextScreen("ready", { type: "final", hasMic: true })).toBe("confirm");
     expect(nextScreen("confirm", { type: "start" })).toBe("confirm");
     expect(nextScreen("confirm", { type: "start", confirmed: false })).toBe("confirm");
     expect(nextScreen("confirm", { type: "start", confirmed: "yes" })).toBe("confirm");
@@ -319,5 +324,87 @@ describe("formatRemaining", () => {
   });
   it("does not wrap past 99 minutes", () => {
     expect(formatRemaining(125 * 60000)).toBe("125:00");
+  });
+});
+
+describe("the typed test path", () => {
+  it("skips the microphone only where typed turns are allowed", () => {
+    expect(nextScreen("mic", { type: "skip" })).toBe("mic");
+    expect(nextScreen("mic", { type: "skip", textAllowed: false })).toBe("mic");
+    expect(nextScreen("mic", { type: "skip", textAllowed: "yes" })).toBe("mic");
+    expect(nextScreen("mic", { type: "skip", textAllowed: true })).toBe("ready");
+  });
+  it("never reaches the final call without a microphone", () => {
+    expect(nextScreen("ready", { type: "final" })).toBe("ready");
+    expect(nextScreen("ready", { type: "final", hasMic: false })).toBe("ready");
+    expect(nextScreen("ready", { type: "final", hasMic: "yes" })).toBe("ready");
+    expect(nextScreen("ready", { type: "final", hasMic: true })).toBe("confirm");
+  });
+  it("can go back from ready to the microphone step", () => {
+    expect(nextScreen("ready", { type: "mic" })).toBe("mic");
+    expect(nextScreen("practice", { type: "mic" })).toBe("practice");
+    expect(nextScreen("call", { type: "mic" })).toBe("call");
+  });
+  it("swaps Speak and Done for Send in a typed practice call, and keeps Redo", () => {
+    expect(callControls("practice", true)).toEqual(["send", "redo", "end"]);
+    expect(callControls("practice", false)).toEqual(["speak", "done", "redo", "end"]);
+  });
+  it("gives the final call the same buttons whether or not typed is asked for", () => {
+    expect(callControls("call", true)).toEqual(["speak", "done", "end"]);
+  });
+  it("encodes a typed turn, trimmed", () => {
+    expect(new TextDecoder().decode(typedTurnBytes("  who is this  "))).toBe("who is this");
+  });
+  it("rejects a blank, missing or over-long typed turn", () => {
+    expect(typedTurnBytes("   ")).toBeNull();
+    expect(typedTurnBytes(undefined)).toBeNull();
+    expect(typedTurnBytes("x".repeat(TYPED_TURN_MAX_BYTES))).not.toBeNull();
+    expect(typedTurnBytes("x".repeat(TYPED_TURN_MAX_BYTES + 1))).toBeNull();
+    // Counted in bytes, not characters: 100 two-byte letters are 200 bytes.
+    expect(typedTurnBytes("é".repeat(100))).toBeNull();
+    expect(TYPED_TURN_MAX_BYTES).toBeLessThan(200);
+  });
+});
+
+describe("stepFor", () => {
+  it("names five steps in order", () => {
+    expect(STEPS).toEqual(["Your name", "Briefing", "Microphone", "Practice", "Final call"]);
+  });
+  it("places every screen on a step", () => {
+    const at = (screen) => stepFor(screen).index;
+    expect(["name", "brief", "mic", "ready", "practice"].map(at)).toEqual([0, 1, 2, 3, 3]);
+    expect(["confirm", "call", "uploading", "retry", "done"].map(at)).toEqual([4, 4, 4, 4, 4]);
+  });
+  it("is finished only on the done screen", () => {
+    expect(stepFor("done").finished).toBe(true);
+    for (const screen of ["name", "ready", "practice", "call", "uploading", "retry"]) {
+      expect(stepFor(screen).finished).toBe(false);
+    }
+  });
+  it("puts an unknown screen on the first step", () => {
+    expect(stepFor("nowhere")).toEqual({ index: 0, finished: false });
+    expect(stepFor("constructor")).toEqual({ index: 0, finished: false });
+  });
+});
+
+describe("callPhase", () => {
+  const none = { finishing: false, busy: false, listening: false, pending: false };
+  it("is idle when nothing is happening", () => {
+    expect(callPhase(none)).toBe("idle");
+  });
+  it("is listening while a turn is being recorded", () => {
+    expect(callPhase({ ...none, listening: true })).toBe("listening");
+  });
+  it("asks for a resend when a turn is waiting and nothing is in flight", () => {
+    expect(callPhase({ ...none, pending: true })).toBe("resend");
+  });
+  it("is sending while a request is in flight, even with a turn waiting", () => {
+    expect(callPhase({ ...none, busy: true, pending: true })).toBe("sending");
+    expect(callPhase({ ...none, busy: true, listening: true })).toBe("sending");
+  });
+  it("is ending once the call is finishing, whatever else is true", () => {
+    expect(callPhase({ finishing: true, busy: true, listening: true, pending: true })).toBe(
+      "ending",
+    );
   });
 });
