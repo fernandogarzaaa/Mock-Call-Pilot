@@ -2,9 +2,13 @@ import {
   callControls,
   callPhase,
   formatRemaining,
+  HEARD_DB,
+  meterFraction,
+  micCheck,
   NAME_MAX,
   nextScreen,
   onTurnError,
+  peakDb,
   pickMimeType,
   postWithRetry,
   recordingExtension,
@@ -16,6 +20,7 @@ import {
 
 const AUDIO_BITS_PER_SECOND = 32000;
 const LAST_LINE_MS = 3000;
+const QUIET_TURN = "We did not hear you in that turn. Check that your microphone is not muted.";
 const LOST_PRACTICE = "Connection lost. Press Done to send that turn again, or Redo to start over.";
 const LOST_TYPED = "Connection lost. Press Send to send that turn again, or Redo to start over.";
 const cfg = JSON.parse(document.getElementById("cfg").textContent);
@@ -55,6 +60,17 @@ const state = {
   confirmTicked: false,
   // Bumped by Redo and by the end of a practice call, so late answers to an old call are dropped.
   callGen: 0,
+  // Sound check: the level meter runs from the moment the microphone is granted.
+  audioCtx: null,
+  analyser: null,
+  meterTimer: null,
+  micPhase: "ask",
+  micLabel: "",
+  micId: "",
+  devices: [],
+  heard: false,
+  checkStart: 0,
+  turnPeak: Number.NEGATIVE_INFINITY,
 };
 let ui = {};
 
@@ -198,6 +214,7 @@ const views = {
   },
 
   mic() {
+    if (state.micPhase === "check") return micCheckView();
     return h(
       "section",
       {},
@@ -493,6 +510,9 @@ function callView(screen) {
     h(
       "div",
       { className: "controls" },
+      ...(typed
+        ? []
+        : [h("div", { className: "meter call-meter", "aria-hidden": "true" }, meterFill())]),
       ui.status,
       main,
       h("div", { className: "side-row" }, ...side),
@@ -525,22 +545,129 @@ async function copyLink(button, input) {
   }
 }
 
-async function requestMic() {
+const MIC_STATUS = {
+  listening: "Listening for your voice.",
+  heard: "We can hear you.",
+  silent:
+    "No sound from this microphone yet. Check that it is not muted and its input volume is up.",
+  silentPick:
+    "No sound from this microphone yet. Check that it is not muted, or choose another microphone below.",
+};
+
+// The sound check: the candidate sees the level move before any call can start, so a muted or
+// wrong microphone is caught here and not in a silent graded recording.
+function micCheckView() {
+  ui.meterFill = h("div", { className: "meter-fill" });
+  ui.micStatus = h("p", { className: "mic-status", role: "status" }, MIC_STATUS.listening);
+  ui.micContinue = h(
+    "button",
+    {
+      type: "button",
+      className: "primary",
+      disabled: !state.heard,
+      onclick: () => go({ type: "granted", heard: state.heard }),
+    },
+    "Continue",
+  );
+  const picker = h("select", {
+    id: "mic-pick",
+    onchange: (event) => requestMic(event.target.value),
+  });
+  for (const device of state.devices) {
+    const option = h("option", { value: device.deviceId }, device.label || "Microphone");
+    option.selected = device.deviceId === state.micId;
+    picker.append(option);
+  }
+  return h(
+    "section",
+    {},
+    h("h1", {}, "Microphone"),
+    h("p", {}, "Say a few words out loud. The bar moves when the microphone hears you."),
+    h("div", { className: "meter", "aria-hidden": "true" }, ui.meterFill),
+    ui.micStatus,
+    h(
+      "div",
+      { className: "field" },
+      h("label", { htmlFor: "mic-pick" }, "Microphone in use"),
+      state.devices.length > 0 ? picker : h("p", { className: "hint" }, state.micLabel),
+    ),
+    errorLine(),
+    h("div", { className: "actions" }, ui.micContinue),
+  );
+}
+
+// Runs for as long as the microphone is open. It moves whichever meter is on screen, settles
+// the sound check, and keeps the loudest level of the turn being recorded.
+function readMeter() {
+  const samples = new Float32Array(state.analyser.fftSize);
+  state.analyser.getFloatTimeDomainData(samples);
+  const db = peakDb(samples);
+  if (state.turn && db > state.turnPeak) state.turnPeak = db;
+  if (ui.meterFill) ui.meterFill.style.width = `${Math.round(meterFraction(db) * 100)}%`;
+  if (state.screen !== "mic" || state.micPhase !== "check") return;
+  if (db >= HEARD_DB) state.heard = true;
+  const result = micCheck(state.heard, performance.now() - state.checkStart);
+  if (ui.micStatus) {
+    const pick = result === "silent" && state.devices.length > 1;
+    ui.micStatus.textContent = MIC_STATUS[pick ? "silentPick" : result];
+    ui.micStatus.dataset.result = result;
+  }
+  if (ui.micContinue) ui.micContinue.disabled = !state.heard;
+}
+
+function stopMic() {
+  clearInterval(state.meterTimer);
+  state.meterTimer = null;
+  if (state.stream) for (const track of state.stream.getTracks()) track.stop();
+}
+
+async function requestMic(deviceId = "") {
   state.error = "";
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
     state.error = "This browser cannot record audio. Open the link in Chrome, Safari or Firefox.";
     render();
     return;
   }
+  // Made inside the click, before any wait, so the browser lets it run.
+  const AudioCtx = window.AudioContext ?? window.webkitAudioContext;
+  if (!state.audioCtx && AudioCtx) state.audioCtx = new AudioCtx();
+  let stream;
   try {
-    state.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+    });
   } catch {
-    state.error = "Microphone access was blocked. Allow it in the browser and try again.";
+    state.error = deviceId
+      ? "That microphone could not be opened. Choose another one."
+      : "Microphone access was blocked. Allow it in the browser and try again.";
     render();
     return;
   }
+  stopMic();
+  state.stream = stream;
   state.mimeType = pickMimeType((type) => MediaRecorder.isTypeSupported(type));
-  go({ type: "granted" });
+  const track = stream.getAudioTracks()[0];
+  state.micLabel = track?.label || "Microphone";
+  state.micId = track?.getSettings?.().deviceId ?? "";
+  try {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    state.devices = all.filter((device) => device.kind === "audioinput" && device.deviceId);
+  } catch {
+    state.devices = [];
+  }
+  state.heard = false;
+  state.checkStart = performance.now();
+  state.micPhase = "check";
+  if (!state.audioCtx) {
+    // No way to measure sound in this browser: do not lock the candidate out.
+    state.heard = true;
+  } else {
+    await state.audioCtx.resume().catch(() => {});
+    state.analyser = state.audioCtx.createAnalyser();
+    state.audioCtx.createMediaStreamSource(stream).connect(state.analyser);
+    state.meterTimer = setInterval(readMeter, 100);
+  }
+  render();
 }
 
 // Each recording is a complete file: no timeslice, one chunk at stop.
@@ -697,6 +824,11 @@ function updateControls() {
   ui.redo.disabled = state.finishing;
 }
 
+function meterFill() {
+  ui.meterFill = h("div", { className: "meter-fill" });
+  return ui.meterFill;
+}
+
 function addLine(text) {
   ui.empty.hidden = true;
   for (const old of ui.lines.querySelectorAll(".latest")) old.classList.remove("latest");
@@ -706,6 +838,7 @@ function addLine(text) {
 
 function onSpeak() {
   if (state.finishing || state.busy || state.turn || state.pending) return;
+  state.turnPeak = Number.NEGATIVE_INFINITY;
   state.turn = record();
   setStatus("Listening. Press Done when you finish.");
   updateControls();
@@ -748,7 +881,8 @@ async function doDone() {
     const recording = state.turn;
     const blob = await recording.stop();
     state.turn = null;
-    state.pending = { index: state.turnIndex, clientMs, blob, resent: false };
+    const quiet = state.analyser !== null && state.turnPeak < HEARD_DB;
+    state.pending = { index: state.turnIndex, clientMs, blob, resent: false, quiet };
   }
   if (state.pending && !state.finishing) {
     await (state.screen === "practice" ? submitPractice() : submitPending());
@@ -786,7 +920,7 @@ async function submitPractice() {
     state.lines.push(body.text);
     addLine(body.text);
   }
-  setStatus("");
+  setStatus(turn.quiet ? QUIET_TURN : "");
   if (body.ended) finishPractice(body.endReason, body.text === "" ? 0 : LAST_LINE_MS);
 }
 
@@ -815,7 +949,7 @@ async function submitPending() {
     state.turnIndex = turn.index + 1;
     state.lines.push(body.text);
     addLine(body.text);
-    setStatus("");
+    setStatus(turn.quiet ? QUIET_TURN : "");
     if (body.ended) beginFinish("candidate_ended", LAST_LINE_MS);
     return;
   }
@@ -861,7 +995,7 @@ async function beginFinish(reason, lingerMs) {
     state.turn = null;
   }
   state.blob = await state.full.stop();
-  for (const track of state.stream.getTracks()) track.stop();
+  stopMic();
   if (go({ type: "end" })) await upload();
 }
 

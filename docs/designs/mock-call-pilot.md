@@ -192,6 +192,19 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
         styled status line.
     *   No behaviour, API, copy on the server-rendered pages, or recording flow changed.
 
+*   **D7, sound check before any call (2026-11-21).** A live final call produced a 21-second
+    recording with no voice: the file peaked at -66.8 dB, so the browser's microphone stream
+    carried no sound, and the page had no way to notice. The Microphone step now has a sound
+    check after permission is granted:
+    *   a level bar that moves with the microphone, and the name of the microphone in use;
+    *   a picker to switch to another input when the browser lists more than one;
+    *   **Continue** stays disabled until the level passes -45 dBFS once. After 6 seconds
+        without sound the page says so and tells the candidate what to check.
+    *   During a call the level bar shows while the candidate speaks. A turn that never passed
+        -45 dBFS is still sent, and the page then says "We did not hear you in that turn."
+    *   A browser with no Web Audio support skips the check, so it cannot lock a candidate out.
+    The recording, upload and storage path is unchanged.
+
 ## Open Questions
 
 The list of unanswered gaps from the brief is kept in one place,
