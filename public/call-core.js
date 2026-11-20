@@ -3,6 +3,7 @@
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const NAME_MAX = 80;
 export const LOST_MESSAGE = "Connection lost. Check your connection and press Done again";
+export const NOT_SAVED_MESSAGE = "That turn could not be saved. Press Done to try again.";
 
 // Chrome and Safari record MP4 and its duration is readable; Chrome's WebM has none.
 const MIME_PREFERENCE = ["audio/mp4", "audio/webm;codecs=opus", "audio/ogg;codecs=opus"];
@@ -109,6 +110,8 @@ export function onTurnError(status, body, resent = false) {
   if (status === 409 && body?.error === "ended") return { action: "upload" };
   const retryable = body?.error === "gap" || body?.error === "conflict";
   if (status === 409 && retryable && !resent) return { action: "resend" };
+  // The server answered, so the connection is fine: say the turn was not saved.
+  if (status >= 400 && status < 500) return { action: "lost", message: NOT_SAVED_MESSAGE };
   return { action: "lost", message: LOST_MESSAGE };
 }
 

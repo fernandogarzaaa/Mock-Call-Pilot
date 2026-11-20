@@ -1215,7 +1215,9 @@ writes that decision into item 14 before the web unit starts.
     *   `onTurnError(status, body)` maps a turn failure to the page's next action:
         *   409 `ended` → go to upload;
         *   409 `gap` or `conflict` → resend the same index once;
-        *   anything else after retries → the "Connection lost" message.
+        *   any other 4xx answer (the server refused the turn) → "That turn could not be
+            saved. Press Done to try again." The connection is fine in this case.
+        *   a network failure or 5xx after retries → the "Connection lost" message.
     *   `formatRemaining(ms)`.
 *   **`call.js`:**
     *   **Start:** pressing Start calls `POST /api/sessions` and starts the full-call recorder

@@ -37,10 +37,15 @@ export class R2Storage implements Storage {
   }
 
   async getJson<T>(key: string): Promise<{ value: T; generation: string } | null> {
-    const res = await this.signer.fetch(this.url(key), { method: "GET" });
+    // Ask for the body uncompressed: a response compressed on the way out carries a weak ETag
+    // (W/"..."), and If-Match never matches a weak ETag, so every later write would fail.
+    const res = await this.signer.fetch(this.url(key), {
+      method: "GET",
+      headers: { "accept-encoding": "identity" },
+    });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`${key}: R2 GET failed with ${res.status}`);
-    const generation = res.headers.get("etag");
+    const generation = res.headers.get("etag")?.replace(/^W\//, "");
     if (!generation) throw new Error(`${key}: R2 returned no ETag`);
     return { value: JSON.parse(await res.text()) as T, generation };
   }
@@ -56,7 +61,9 @@ export class R2Storage implements Storage {
     // 412 is a failed condition; R2 answers 409 when another conditional write to the key is
     // in flight. Both mean another writer got there first.
     if (res.status === 412 || res.status === 409) {
-      throw new PreconditionFailed(`${key}: ETag is not ${ifGeneration}`);
+      throw new PreconditionFailed(
+        `${key}: R2 answered ${res.status}, ETag is not ${ifGeneration}`,
+      );
     }
     if (!res.ok) throw new Error(`${key}: R2 PUT failed with ${res.status}`);
     const generation = res.headers.get("etag");
