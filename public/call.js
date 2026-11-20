@@ -1,5 +1,6 @@
 import {
   callControls,
+  callPhase,
   formatRemaining,
   NAME_MAX,
   nextScreen,
@@ -7,15 +8,23 @@ import {
   pickMimeType,
   postWithRetry,
   recordingExtension,
+  STEPS,
+  stepFor,
   tooLargeToUpload,
+  typedTurnBytes,
 } from "./call-core.js";
 
 const AUDIO_BITS_PER_SECOND = 32000;
 const LAST_LINE_MS = 3000;
 const LOST_PRACTICE = "Connection lost. Press Done to send that turn again, or Redo to start over.";
+const LOST_TYPED = "Connection lost. Press Send to send that turn again, or Redo to start over.";
 const cfg = JSON.parse(document.getElementById("cfg").textContent);
 const app = document.getElementById("app");
-const code = new URLSearchParams(location.search).get("code") ?? "";
+const params = new URLSearchParams(location.search);
+const code = params.get("code") ?? "";
+// Typed practice turns are a test path: demo mode only, and only when the link asks for it.
+// The demo transcriber echoes typed text; a real one would not understand it.
+const textAllowed = cfg.mode === "demo" && params.get("text") === "1";
 
 const state = {
   screen: "name",
@@ -78,7 +87,28 @@ function go(event) {
 
 function render() {
   ui = {};
-  app.replaceChildren(views[state.screen]());
+  app.replaceChildren(stepBar(), views[state.screen]());
+}
+
+// The five steps are a real sequence, so they are numbered. Practice and final call get their
+// own colours here too, matching the call screens.
+function stepBar() {
+  const { index, finished } = stepFor(state.screen);
+  const items = STEPS.map((label, i) => {
+    let stage = "todo";
+    if (i < index || finished) stage = "done";
+    else if (i === index) stage = "current";
+    const item = h("li", { className: `step step-${stage}` }, label);
+    if (stage === "current") item.setAttribute("aria-current", "step");
+    return item;
+  });
+  const now = finished ? "All steps done" : `Step ${index + 1} of ${STEPS.length}: ${STEPS[index]}`;
+  return h(
+    "nav",
+    { className: `steps steps-at-${index}`, "aria-label": "Progress" },
+    h("p", { className: "steps-now" }, now),
+    h("ol", {}, ...items),
+  );
 }
 
 function errorLine() {
@@ -113,7 +143,17 @@ const views = {
       h("button", { type: "submit", className: "primary" }, "Continue"),
     );
     queueMicrotask(() => input.focus());
-    return h("section", {}, h("h1", {}, "Mock call"), form);
+    return h(
+      "section",
+      {},
+      h("h1", {}, "Mock call"),
+      h(
+        "p",
+        { className: "lead" },
+        "You will practise a sales call with a scripted prospect, then make one recorded final call.",
+      ),
+      form,
+    );
   },
 
   brief() {
@@ -163,52 +203,100 @@ const views = {
       {},
       h("h1", {}, "Microphone"),
       h("p", {}, "Allow the microphone so the call can be recorded."),
+      h(
+        "p",
+        { className: "hint" },
+        "Your browser asks for permission after you press the button. Choose Allow.",
+      ),
       errorLine(),
       h(
-        "button",
-        { type: "button", className: "primary", onclick: requestMic },
-        "Allow microphone",
+        "div",
+        { className: "actions" },
+        h(
+          "button",
+          { type: "button", className: "primary", onclick: requestMic },
+          "Allow microphone",
+        ),
+        ...(textAllowed
+          ? [
+              h(
+                "button",
+                {
+                  type: "button",
+                  onclick() {
+                    state.error = "";
+                    go({ type: "skip", textAllowed });
+                  },
+                },
+                "Continue without a microphone (typed test)",
+              ),
+            ]
+          : []),
       ),
     );
   },
 
   ready() {
+    const hasMic = state.stream !== null;
     const practice = h(
       "button",
-      { type: "button", className: "primary", onclick: startPractice },
+      { type: "button", className: "practice", onclick: startPractice },
       "Start practice call",
     );
     ui.start = practice;
-    const final = h(
-      "button",
-      { type: "button", className: "final", onclick: () => go({ type: "final" }) },
-      "Make my final call",
-    );
     const children = [
-      h("h1", {}, "Ready"),
-      h("p", {}, "Press Speak to talk and Done when you finish each turn."),
+      h("h1", {}, "Practice, then make your final call"),
+      h(
+        "p",
+        {},
+        hasMic
+          ? "Press Speak to talk and Done when you finish each turn."
+          : "Typed test: type each turn and press Send. Nothing is recorded.",
+      ),
       h("p", {}, `Time limit: ${limitLabel()}.`),
     ];
-    if (state.practiceNote) children.push(h("p", { className: "status" }, state.practiceNote));
+    if (state.practiceNote) {
+      children.push(h("p", { className: "note", role: "status" }, state.practiceNote));
+    }
+    const finalCard = hasMic
+      ? [
+          h("p", {}, "Recorded and graded. One attempt, with no redo."),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "final",
+              onclick: () => go({ type: "final", hasMic }),
+            },
+            "Make my final call",
+          ),
+        ]
+      : [
+          h("p", {}, "Recorded and graded. The final call needs a microphone."),
+          h("button", { type: "button", onclick: () => go({ type: "mic" }) }, "Allow microphone"),
+        ];
     children.push(
       errorLine(),
       h(
         "div",
-        { className: "choice practice-choice" },
-        h("h2", {}, "Practice call"),
+        { className: "choices" },
         h(
-          "p",
-          {},
-          "Practice as many times as you like. Practice calls are not recorded, not saved and not graded.",
+          "div",
+          { className: "choice practice-choice" },
+          h("h2", {}, h("span", { className: "dot", "aria-hidden": "true" }), "Practice call"),
+          h(
+            "p",
+            {},
+            "Practice as many times as you like. Practice calls are not recorded, not saved and not graded.",
+          ),
+          practice,
         ),
-        practice,
-      ),
-      h(
-        "div",
-        { className: "choice final-choice" },
-        h("h2", {}, "Final call"),
-        h("p", {}, "Recorded and graded. One attempt, with no redo."),
-        final,
+        h(
+          "div",
+          { className: "choice final-choice" },
+          h("h2", {}, h("span", { className: "dot", "aria-hidden": "true" }), "Final call"),
+          ...finalCard,
+        ),
       ),
     );
     return h("section", {}, ...children);
@@ -259,7 +347,7 @@ const views = {
         h("label", { htmlFor: "final-tick" }, "I am ready to make my final call"),
       ),
       errorLine(),
-      h("div", { className: "controls" }, start, back),
+      h("div", { className: "actions" }, start, back),
     );
   },
 
@@ -272,7 +360,13 @@ const views = {
   },
 
   uploading() {
-    return h("section", {}, h("h1", {}, "Uploading"), h("p", {}, "Keep this page open."));
+    return h(
+      "section",
+      { className: "state state-busy" },
+      h("div", { className: "progress", role: "progressbar", "aria-label": "Uploading" }),
+      h("h1", {}, "Uploading"),
+      h("p", {}, "Keep this page open."),
+    );
   },
 
   retry() {
@@ -314,6 +408,7 @@ const views = {
     return h(
       "section",
       {},
+      h("div", { className: "tick-mark", "aria-hidden": "true" }),
       h("h1", {}, "Call complete"),
       h("p", {}, "Paste this link into your Paid Test document."),
       h("div", { className: "link-row" }, link, copy),
@@ -321,42 +416,103 @@ const views = {
   },
 };
 
-// The practice and final call screens share one layout; only the label and the buttons differ.
+// The practice and final call screens share one layout, built like a phone call: who is on the
+// line and whether it is recorded at the top, the prospect's latest line in the middle, and one
+// main button at the bottom.
 function callView(screen) {
   const practice = screen === "practice";
+  const typed = practice && state.stream === null;
   ui.clock = h("span", { className: "clock" }, formatRemaining(state.limitMs));
   ui.lines = h("ol", { className: "prospect-lines", "aria-live": "polite" });
-  ui.empty = h("p", { className: "hint" }, "Press Speak and say your opening line.");
+  ui.empty = h(
+    "p",
+    { className: "opening" },
+    typed ? "Type your opening line and press Send." : "Press Speak and say your opening line.",
+  );
   ui.status = h("p", { className: "status", role: "status" }, state.status);
-  ui.speak = h("button", { type: "button", className: "primary", onclick: onSpeak }, "Speak");
-  ui.done = h("button", { type: "button", className: "primary", onclick: onDone }, "Done");
-  ui.redo = h("button", { type: "button", onclick: onRedo }, "Redo");
+  ui.speak = h("button", { type: "button", className: "speak-btn", onclick: onSpeak }, "Speak");
+  ui.done = h("button", { type: "button", className: "done-btn", onclick: onDone }, "Done");
+  ui.redo = h("button", { type: "button", className: "quiet", onclick: onRedo }, "Redo");
   ui.end = h(
     "button",
-    { type: "button", className: "danger", onclick: onEndCall },
+    { type: "button", className: "quiet danger", onclick: onEndCall },
     practice ? "End practice" : "End Call",
   );
+  ui.say = h("input", {
+    type: "text",
+    id: "typed-turn",
+    autocomplete: "off",
+    "aria-label": "Your line",
+    placeholder: "Type what you would say",
+  });
+  ui.send = h("button", { type: "submit", className: "primary" }, "Send");
   for (const text of state.lines) addLine(text);
   queueMicrotask(updateControls);
-  const label = cfg.maxCallMinutesIsDemo ? "Time left (demo limit)" : "Time left";
-  const mode = practice
+
+  const names = callControls(screen, typed);
+  const side = names.filter((name) => name === "redo" || name === "end").map((name) => ui[name]);
+  const main = typed
     ? h(
-        "p",
-        { className: "mode practice-mode", role: "status" },
-        "PRACTICE CALL: not recorded, not saved, does not count. Your speech is still sent to the speech-to-text and AI services so the prospect can answer.",
+        "form",
+        {
+          className: "typed-row",
+          onsubmit(event) {
+            event.preventDefault();
+            onSend();
+          },
+        },
+        ui.say,
+        ui.send,
       )
-    : h("p", { className: "mode final-mode" }, "FINAL CALL: recorded and graded. One attempt.");
-  return h(
-    "section",
-    { className: "call" },
-    mode,
-    h("p", { className: "timer" }, `${label}: `, ui.clock),
-    h("h2", {}, "Prospect"),
-    ui.empty,
-    ui.lines,
-    ui.status,
-    h("div", { className: "controls" }, ...callControls(screen).map((name) => ui[name])),
+    : h("div", { className: "talk-row" }, ui.speak, ui.done);
+
+  const top = h(
+    "header",
+    { className: "call-top", role: "status" },
+    h(
+      "div",
+      { className: "call-state" },
+      h("span", { className: practice ? "dot" : "dot rec-dot", "aria-hidden": "true" }),
+      h("strong", {}, practice ? "Practice call" : "Final call"),
+      h(
+        "span",
+        { className: "call-sub" },
+        practice ? "Not recorded, not saved, does not count." : "Recording. Graded. One attempt.",
+      ),
+    ),
+    h(
+      "div",
+      { className: "call-time" },
+      ui.clock,
+      h("span", {}, cfg.maxCallMinutesIsDemo ? "Time left (demo limit)" : "Time left"),
+    ),
   );
+  const children = [
+    top,
+    h("div", { className: "prospect" }, h("h2", {}, "Prospect"), ui.empty, ui.lines),
+    h(
+      "div",
+      { className: "controls" },
+      ui.status,
+      main,
+      h("div", { className: "side-row" }, ...side),
+    ),
+  ];
+  if (practice && !typed) {
+    children.push(
+      h(
+        "p",
+        { className: "footnote" },
+        "Your speech is still sent to the speech-to-text and AI services so the prospect can answer.",
+      ),
+    );
+  }
+  ui.section = h(
+    "section",
+    { className: `call ${practice ? "call-practice" : "call-final"}` },
+    ...children,
+  );
+  return ui.section;
 }
 
 async function copyLink(button, input) {
@@ -526,6 +682,15 @@ function setStatus(text) {
 function updateControls() {
   if (!ui.speak) return;
   const locked = state.finishing || state.busy !== null;
+  // The phase picks the one main button the stylesheet shows: Speak, or Done.
+  ui.section.dataset.phase = callPhase({
+    finishing: state.finishing,
+    busy: state.busy !== null,
+    listening: state.turn !== null,
+    pending: state.pending !== null,
+  });
+  ui.say.disabled = locked;
+  ui.send.disabled = locked;
   ui.speak.disabled = locked || state.turn !== null || state.pending !== null;
   ui.done.disabled = locked || (state.turn === null && state.pending === null);
   ui.end.disabled = locked;
@@ -544,6 +709,26 @@ function onSpeak() {
   state.turn = record();
   setStatus("Listening. Press Done when you finish.");
   updateControls();
+}
+
+// The typed test path: the line travels in the turn's audio field, which the demo transcriber
+// echoes back. A turn that failed to send is kept and sent again.
+function onSend() {
+  if (state.finishing || state.busy || state.screen !== "practice") return;
+  if (!state.pending) {
+    const bytes = typedTurnBytes(ui.say.value);
+    if (!bytes) {
+      setStatus(
+        ui.say.value.trim() === "" ? "Type a line first." : "That line is too long. Shorten it.",
+      );
+      return;
+    }
+    const clientMs = Math.round(performance.now() - state.startedAt);
+    const blob = new Blob([bytes], { type: "text/plain" });
+    state.pending = { index: state.turnIndex, clientMs, blob, resent: false };
+    ui.say.value = "";
+  }
+  onDone();
 }
 
 function onDone() {
@@ -591,7 +776,7 @@ async function submitPractice() {
   }
   if (gen !== state.callGen) return;
   if (typeof body?.text !== "string" || !body.state) {
-    setStatus(LOST_PRACTICE);
+    setStatus(state.stream === null ? LOST_TYPED : LOST_PRACTICE);
     return;
   }
   state.pending = null;

@@ -148,15 +148,49 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
         back with each turn to `POST /api/practice/turn`, so the server stays stateless (see
         Sessions and concurrency). Each turn's audio still goes to speech-to-text and the
         picker, because the prospect has to answer; the practice label says so.
-    *   A practice call shows a "PRACTICE CALL: not recorded, not saved, does not count" label,
-        a **Redo** button that drops the call and starts a fresh one, and **End practice**,
-        which returns to Ready.
+    *   A practice call shows a green "Practice call. Not recorded, not saved, does not count."
+        strip, a **Redo** button that drops the call and starts a fresh one, and **End
+        practice**, which returns to Ready.
     *   The final call is chosen with **Make my final call**, then a confirm screen with a tick
         box ("I am ready to make my final call") and **Start final call**, or **Back to
-        practice**. It shows a "FINAL CALL: recorded and graded" label and has no Redo. Its
-        recording, link and grading are unchanged.
-    *   Practice and final are told apart by words as well as colour (green practice label,
-        purple final label and button).
+        practice**. It shows a plum "Final call. Recording. Graded. One attempt." strip with a
+        red recording dot, and has no Redo. Its recording, link and grading are unchanged.
+    *   Practice and final are told apart by words as well as colour (green for practice, plum
+        for the final call), on the Ready cards, the call strip and the step bar.
+*   **D5, page design and the typed test path (2026-11-21, Inan).**
+    *   *Step bar:* every screen shows five numbered steps: Your name, Briefing, Microphone,
+        Practice, Final call. Under 34rem wide it shows the bar plus "Step N of 5: name".
+    *   *Two type voices:* the interface is set in a sans; the prospect's lines are set in a
+        serif, like a script page. Both are system font stacks, so the page loads no web fonts
+        and makes no third-party requests.
+    *   *Call screen:* a strip names the call and holds the clock; the latest prospect line is
+        the largest text; Speak and Done are the largest buttons, and Speak reads "Listening…"
+        while recording.
+    *   *Typed test path:* a link with `&text=1`, in demo mode only, adds **Continue without a
+        microphone (typed test)** to the Microphone step. Practice turns are then typed and
+        sent in the existing `audio` field, so the API is unchanged. It exists for testing: the
+        demo transcriber echoes the typed line, and a real transcriber would not understand it,
+        which is why live mode never offers it. The final call cannot be reached without a
+        microphone (`nextScreen` requires `hasMic`); the Ready screen offers **Allow
+        microphone** instead.
+    *   The microphone request itself is unchanged.
+*   **D6, visual identity: quiet confidence (2026-11-21, Inan).**
+    *   *Palette:* warm paper background, deep ink text, and one accent per call state: a
+        muted green for practice and a muted plum for the final call. No gradients and no
+        boxed cards; sections are separated by thin rules and spacing. The demo banner keeps
+        its wording in a quieter tone.
+    *   *Step bar:* dots joined by a line in the page's ink, with the current step ringed, in
+        place of numbered boxes.
+    *   *Call screen:* the prospect's latest line is the largest text and sits in the centre,
+        under a small "Prospect" label. A strip names the call ("Not recorded, not saved, does
+        not count." or "Recording. Graded. One attempt.") and holds a small clock. The
+        controls (status line, Speak or Done, then Redo and End) stay pinned to the bottom of
+        the screen, so the main button is under the thumb on a phone.
+    *   *Controls:* every button is at least 44 px tall; Speak and Done are 68 px. Buttons
+        have hover and keyboard-focus states.
+    *   *States:* requesting, listening, sending, error and finished each have their own
+        styled status line.
+    *   No behaviour, API, copy on the server-rendered pages, or recording flow changed.
 
 ## Open Questions
 
@@ -1170,8 +1204,12 @@ writes that decision into item 14 before the web unit starts.
         call → uploading → done`, plus `uploading → retry`, `ready ⇄ practice` and
         `confirm → ready` (Back). `brief` shows client summary, task instructions and notice,
         and needs the tick. `confirm → call` needs `confirmed: true` (D4).
-    *   `callControls(screen)`: `practice` gets Speak, Done, Redo, End; `call` gets Speak,
-        Done, End, with no Redo.
+    *   `callControls(screen, typed)`: `practice` gets Speak, Done, Redo, End (Send, Redo, End
+        when typed); `call` gets Speak, Done, End, with no Redo.
+    *   `stepFor(screen)` and `STEPS` drive the step bar. `typedTurnBytes(text)` encodes a
+        typed turn and rejects blank or over-190-byte lines (D5). `mic → ready` on `skip`
+        needs `textAllowed: true`; `ready → confirm` needs `hasMic: true`; `ready → mic`
+        returns to the Microphone step.
     *   `postWithRetry(fetchFn, url, form, attempts = 3)`: retries only on network errors and
         5xx, with 1 s and 2 s waits.
     *   `onTurnError(status, body)` maps a turn failure to the page's next action:

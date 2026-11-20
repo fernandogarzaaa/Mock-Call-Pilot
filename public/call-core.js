@@ -38,8 +38,8 @@ export function tooLargeToUpload(bytes) {
 const TRANSITIONS = {
   name: { submit: "brief" },
   brief: { accept: "mic" },
-  mic: { granted: "ready" },
-  ready: { practice: "practice", final: "confirm" },
+  mic: { granted: "ready", skip: "ready" },
+  ready: { practice: "practice", final: "confirm", mic: "mic" },
   practice: { end: "ready" },
   confirm: { start: "call", back: "ready" },
   call: { end: "uploading" },
@@ -60,13 +60,21 @@ export function nextScreen(screen, event) {
   if (next === undefined) return screen;
   if (screen === "name" && !validName(event.name)) return screen;
   if (screen === "brief" && event.noticeTicked !== true) return screen;
+  // Skipping the microphone is a test path: only where the page says typed turns are allowed.
+  if (screen === "mic" && type === "skip" && event.textAllowed !== true) return screen;
+  // The final call is recorded, so it cannot be reached without a microphone.
+  if (screen === "ready" && type === "final" && event.hasMic !== true) return screen;
   // The final call starts only from the confirm screen, after the candidate ticks the box.
   if (screen === "confirm" && type === "start" && event.confirmed !== true) return screen;
   return next;
 }
 
-/** The buttons on a call screen. Practice can be redone; the final call is one attempt. */
-export function callControls(screen) {
+/**
+ * The buttons on a call screen. Practice can be redone; the final call is one attempt.
+ * A practice call without a microphone (the typed test path) swaps Speak and Done for Send.
+ */
+export function callControls(screen, typed = false) {
+  if (screen === "practice" && typed) return ["send", "redo", "end"];
   if (screen === "practice") return ["speak", "done", "redo", "end"];
   if (screen === "call") return ["speak", "done", "end"];
   return [];
@@ -110,4 +118,48 @@ export function formatRemaining(ms) {
   const minutes = Math.floor(total / 60);
   const seconds = String(total % 60).padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+export const STEPS = ["Your name", "Briefing", "Microphone", "Practice", "Final call"];
+
+const STEP_OF = {
+  name: 0,
+  brief: 1,
+  mic: 2,
+  ready: 3,
+  practice: 3,
+  confirm: 4,
+  call: 4,
+  uploading: 4,
+  retry: 4,
+  done: 4,
+};
+
+/** Where a screen sits in the five steps: its 0-based index, and whether the flow is finished. */
+export function stepFor(screen) {
+  const index = Object.hasOwn(STEP_OF, screen) ? STEP_OF[screen] : 0;
+  return { index, finished: screen === "done" };
+}
+
+// The demo transcriber echoes a turn only when it is under 200 bytes, so typed turns stay below.
+export const TYPED_TURN_MAX_BYTES = 190;
+
+/** The bytes of a typed practice turn, or null when it is blank or too long to be echoed. */
+export function typedTurnBytes(text) {
+  const trimmed = typeof text === "string" ? text.trim() : "";
+  if (trimmed === "") return null;
+  const bytes = new TextEncoder().encode(trimmed);
+  return bytes.byteLength > TYPED_TURN_MAX_BYTES ? null : bytes;
+}
+
+/**
+ * What the candidate is doing on a call screen, which decides the one main button shown:
+ * Speak when idle, Done while listening or when a turn must be sent again, none while busy.
+ */
+export function callPhase({ finishing, busy, listening, pending }) {
+  if (finishing) return "ending";
+  if (busy) return "sending";
+  if (listening) return "listening";
+  if (pending) return "resend";
+  return "idle";
 }
