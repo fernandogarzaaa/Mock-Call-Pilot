@@ -3,11 +3,17 @@ import {
   callControls,
   callPhase,
   formatRemaining,
+  HEARD_DB,
   LOST_MESSAGE,
   MAX_UPLOAD_BYTES,
+  METER_FLOOR_DB,
+  MIC_CHECK_PATIENCE_MS,
+  meterFraction,
+  micCheck,
   NOT_SAVED_MESSAGE,
   nextScreen,
   onTurnError,
+  peakDb,
   pickMimeType,
   postWithRetry,
   recordingExtension,
@@ -102,7 +108,7 @@ describe("nextScreen", () => {
     const events = [
       ok,
       { type: "accept", noticeTicked: true },
-      { type: "granted" },
+      { type: "granted", heard: true },
       { type: "final", hasMic: true },
       { type: "start", confirmed: true },
       { type: "end" },
@@ -415,5 +421,44 @@ describe("callPhase", () => {
     expect(callPhase({ finishing: true, busy: true, listening: true, pending: true })).toBe(
       "ending",
     );
+  });
+});
+
+describe("the sound check", () => {
+  it("stays on the microphone step until sound was heard", () => {
+    expect(nextScreen("mic", { type: "granted" })).toBe("mic");
+    expect(nextScreen("mic", { type: "granted", heard: false })).toBe("mic");
+    expect(nextScreen("mic", { type: "granted", heard: "yes" })).toBe("mic");
+    expect(nextScreen("mic", { type: "granted", heard: true })).toBe("ready");
+  });
+  it("measures the peak of the samples in dBFS", () => {
+    expect(peakDb(new Float32Array([0, 0, 0]))).toBe(Number.NEGATIVE_INFINITY);
+    expect(peakDb([])).toBe(Number.NEGATIVE_INFINITY);
+    expect(peakDb([0.1, -1, 0.5])).toBe(0);
+    expect(peakDb([0.01, -0.1])).toBeCloseTo(-20, 5);
+    expect(peakDb([0.001])).toBeCloseTo(-60, 5);
+  });
+  it("treats the level of the silent live recording as not heard, and speech as heard", () => {
+    // The silent recording of 2026-11-21 peaked at -66.8 dB; quiet speech peaks near -30 dB.
+    expect(-66.8 < HEARD_DB).toBe(true);
+    expect(-30 >= HEARD_DB).toBe(true);
+    expect(HEARD_DB).toBe(-45);
+  });
+  it("maps a level onto the meter between the floor and full scale", () => {
+    expect(METER_FLOOR_DB).toBe(-70);
+    expect(meterFraction(Number.NEGATIVE_INFINITY)).toBe(0);
+    expect(meterFraction(Number.NaN)).toBe(0);
+    expect(meterFraction(-70)).toBe(0);
+    expect(meterFraction(-35)).toBeCloseTo(0.5, 5);
+    expect(meterFraction(0)).toBe(1);
+    expect(meterFraction(6)).toBe(1);
+  });
+  it("reports listening, then silent after the wait, and heard at any time", () => {
+    expect(MIC_CHECK_PATIENCE_MS).toBe(6000);
+    expect(micCheck(false, 0)).toBe("listening");
+    expect(micCheck(false, 5999)).toBe("listening");
+    expect(micCheck(false, 6000)).toBe("silent");
+    expect(micCheck(true, 0)).toBe("heard");
+    expect(micCheck(true, 60000)).toBe("heard");
   });
 });

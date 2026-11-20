@@ -63,6 +63,8 @@ export function nextScreen(screen, event) {
   if (screen === "brief" && event.noticeTicked !== true) return screen;
   // Skipping the microphone is a test path: only where the page says typed turns are allowed.
   if (screen === "mic" && type === "skip" && event.textAllowed !== true) return screen;
+  // A silent microphone would make a silent graded recording, so sound must be heard first.
+  if (screen === "mic" && type === "granted" && event.heard !== true) return screen;
   // The final call is recorded, so it cannot be reached without a microphone.
   if (screen === "ready" && type === "final" && event.hasMic !== true) return screen;
   // The final call starts only from the confirm screen, after the candidate ticks the box.
@@ -113,6 +115,33 @@ export function onTurnError(status, body, resent = false) {
   // The server answered, so the connection is fine: say the turn was not saved.
   if (status >= 400 && status < 500) return { action: "lost", message: NOT_SAVED_MESSAGE };
   return { action: "lost", message: LOST_MESSAGE };
+}
+
+// A working microphone picks up speech far above this; a muted or wrong input stays below it.
+export const HEARD_DB = -45;
+export const METER_FLOOR_DB = -70;
+export const MIC_CHECK_PATIENCE_MS = 6000;
+
+/** Peak level of time-domain samples (-1..1) in dBFS; -Infinity for digital silence. */
+export function peakDb(samples) {
+  let peak = 0;
+  for (const sample of samples) {
+    const size = Math.abs(sample);
+    if (size > peak) peak = size;
+  }
+  return peak === 0 ? Number.NEGATIVE_INFINITY : 20 * Math.log10(peak);
+}
+
+/** Where a level sits on the meter: 0 at the floor or below, 1 at full scale. */
+export function meterFraction(db) {
+  if (!(db > METER_FLOOR_DB)) return 0;
+  return Math.min(1, (db - METER_FLOOR_DB) / -METER_FLOOR_DB);
+}
+
+/** The sound check: "heard" once any sound passed the threshold, "silent" after a patient wait. */
+export function micCheck(heard, elapsedMs) {
+  if (heard) return "heard";
+  return elapsedMs >= MIC_CHECK_PATIENCE_MS ? "silent" : "listening";
 }
 
 /** "m:ss", rounded up so the clock shows 0:00 only once time has run out. */
