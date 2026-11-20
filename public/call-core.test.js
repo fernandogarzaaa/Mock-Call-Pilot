@@ -10,6 +10,7 @@ import {
   MIC_CHECK_PATIENCE_MS,
   meterFraction,
   micCheck,
+  micConstraints,
   NOT_SAVED_MESSAGE,
   nextScreen,
   onTurnError,
@@ -460,5 +461,20 @@ describe("the sound check", () => {
     expect(micCheck(false, 6000)).toBe("silent");
     expect(micCheck(true, 0)).toBe("heard");
     expect(micCheck(true, 60000)).toBe("heard");
+  });
+});
+
+describe("micConstraints", () => {
+  it("asks for the default microphone unless a device id string is given", () => {
+    expect(micConstraints()).toEqual({ audio: true });
+    expect(micConstraints("")).toEqual({ audio: true });
+    expect(micConstraints(null)).toEqual({ audio: true });
+  });
+  it("ignores a click event passed in by a button handler", () => {
+    expect(micConstraints({ type: "click", target: {} })).toEqual({ audio: true });
+    expect(micConstraints(7)).toEqual({ audio: true });
+  });
+  it("asks for exactly the chosen microphone", () => {
+    expect(micConstraints("abc123")).toEqual({ audio: { deviceId: { exact: "abc123" } } });
   });
 });

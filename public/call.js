@@ -5,6 +5,7 @@ import {
   HEARD_DB,
   meterFraction,
   micCheck,
+  micConstraints,
   NAME_MAX,
   nextScreen,
   onTurnError,
@@ -231,7 +232,7 @@ const views = {
         { className: "actions" },
         h(
           "button",
-          { type: "button", className: "primary", onclick: requestMic },
+          { type: "button", className: "primary", onclick: () => requestMic() },
           "Allow microphone",
         ),
         ...(textAllowed
@@ -621,7 +622,9 @@ function stopMic() {
   if (state.stream) for (const track of state.stream.getTracks()) track.stop();
 }
 
-async function requestMic(deviceId = "") {
+async function requestMic(deviceId) {
+  const constraints = micConstraints(deviceId);
+  const chosen = constraints.audio !== true;
   state.error = "";
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
     state.error = "This browser cannot record audio. Open the link in Chrome, Safari or Firefox.";
@@ -633,11 +636,9 @@ async function requestMic(deviceId = "") {
   if (!state.audioCtx && AudioCtx) state.audioCtx = new AudioCtx();
   let stream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
-    });
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
   } catch {
-    state.error = deviceId
+    state.error = chosen
       ? "That microphone could not be opened. Choose another one."
       : "Microphone access was blocked. Allow it in the browser and try again.";
     render();
