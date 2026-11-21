@@ -57,10 +57,12 @@ Names only. Values go in the Render dashboard, never in the repo.
 | `R2_ACCESS_KEY_ID` | demo and live | R2 API token with Object Read & Write on that bucket |
 | `R2_SECRET_ACCESS_KEY` | demo and live | from the same R2 API token |
 | `ACCESS_CODE` | demo and live | shared code in the call link (`/call?code=...`) |
-| `ELEVENLABS_API_KEY` | live only | Scribe transcription |
+| `GROQ_API_KEY` | when `STT=groq` | Whisper transcription on Groq's free tier (about 8 hours of audio a day) |
+| `ELEVENLABS_API_KEY` | when `STT` is unset or `scribe` | Scribe transcription (paid) |
 | `ANTHROPIC_API_KEY` | live only | line picker (`claude-opus-5-5`, effort `low`) |
 | `MODE` | set in render.yaml | `demo` now; `live` once every gap is filled |
-| `STT`, `PICKER` | set in render.yaml | `fake` in demo; delete both for live |
+| `STT` | set in render.yaml | `fake`, `groq` (free) or `scribe`; `fake` is refused in live mode |
+| `PICKER` | set in render.yaml | `fake` in demo; delete it for live |
 
 No public R2 URL is needed: audio is served through presigned links that need no login.
 Demo mode needs only the R2 variables and `ACCESS_CODE`. Recordings need R2 even in demo

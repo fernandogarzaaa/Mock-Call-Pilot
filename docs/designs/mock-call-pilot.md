@@ -205,6 +205,17 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   A browser with no Web Audio support skips the check, so it cannot lock a candidate out.
     The recording, upload and storage path is unchanged.
 
+*   **D8, free speech-to-text on Groq (2026-11-21, Inan).** The pilot stays on free services, so
+    `STT=groq` selects Whisper (`whisper-large-v3-turbo`) on Groq's free tier in place of
+    ElevenLabs Scribe. It needs `GROQ_API_KEY`. The adapter sends `language=en` and uses the
+    same 10-second timeout and error kinds as Scribe.
+    *   Free-tier limits seen on 2026-11-21 (third-party sources, not Groq's own page): about
+        8 hours of audio a day, 2 hours in any hour, 20 requests a minute, and each request
+        counts as at least 10 seconds.
+    *   Past a limit Groq answers 429. That turn falls back like any failed transcription
+        (`stt_error`); the recording is unaffected.
+    *   Accuracy on accented speech is not measured yet. Scribe stays available (`STT=scribe`).
+
 ## Open Questions
 
 The list of unanswered gaps from the brief is kept in one place,

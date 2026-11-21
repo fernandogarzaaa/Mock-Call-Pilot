@@ -8,6 +8,7 @@ import { FsStorage } from "../storage/fs.ts";
 import { GcsStorage } from "../storage/gcs.ts";
 import { R2Storage } from "../storage/r2.ts";
 import { FakeTranscriber } from "../stt/fake.ts";
+import { GroqTranscriber } from "../stt/groq.ts";
 import { ScribeTranscriber } from "../stt/scribe.ts";
 import type { LinePicker, ResolvedConfig, Storage, Transcriber } from "../types/index.ts";
 import { ConfigError } from "../types/index.ts";
@@ -45,6 +46,12 @@ async function buildStorage(env: Env): Promise<Storage> {
 
 function buildTranscriber(env: Env): Transcriber {
   if (env.STT === "fake") return new FakeTranscriber();
+  if (env.STT === "groq") {
+    return new GroqTranscriber(
+      requireEnv(env, "GROQ_API_KEY"),
+      env.GROQ_STT_MODEL || "whisper-large-v3-turbo",
+    );
+  }
   return new ScribeTranscriber(
     requireEnv(env, "ELEVENLABS_API_KEY"),
     env.SCRIBE_MODEL || "scribe_v1",
