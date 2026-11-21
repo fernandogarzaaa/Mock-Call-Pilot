@@ -50,10 +50,14 @@ export class GroqTranscriber implements Transcriber {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (err) {
-      throw new TranscribeError(isTimeout(err) ? "stt_timeout" : "stt_error");
+      const detail = err instanceof Error ? `${err.name}: ${err.message}` : "request failed";
+      throw new TranscribeError(isTimeout(err) ? "stt_timeout" : "stt_error", detail);
     }
     // Includes 429, the free tier's rate limit: the turn falls back like any other failure.
-    if (!res.ok) throw new TranscribeError("stt_error");
+    if (!res.ok) {
+      const reason = (await res.text().catch(() => "")).slice(0, 300);
+      throw new TranscribeError("stt_error", `Groq answered ${res.status}: ${reason}`);
+    }
 
     // The body read is covered by the same abort signal, so it can time out too.
     let body: unknown;

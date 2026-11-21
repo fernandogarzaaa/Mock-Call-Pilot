@@ -147,9 +147,12 @@ export class PickerError extends Error {
 }
 export class TranscribeError extends Error {
   readonly kind: "stt_error" | "stt_timeout";
-  constructor(kind: TranscribeError["kind"]) {
+  /** What the vendor answered, for the server log only. Never shown to a candidate. */
+  readonly detail: string;
+  constructor(kind: TranscribeError["kind"], detail = "") {
     super(kind);
     this.kind = kind;
+    this.detail = detail;
   }
 }
 export class ConfigError extends Error {

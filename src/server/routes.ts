@@ -103,7 +103,10 @@ async function transcribe(t: Transcriber, audio: Uint8Array, mime: string): Prom
   try {
     return { text: await t.transcribe(audio, mime) };
   } catch (error) {
-    return { sttError: error instanceof TranscribeError ? error.kind : "stt_error" };
+    const known = error instanceof TranscribeError;
+    const detail = known ? error.detail : String(error);
+    console.warn(JSON.stringify({ event: "stt_failed", detail }));
+    return { sttError: known ? error.kind : "stt_error" };
   }
 }
 

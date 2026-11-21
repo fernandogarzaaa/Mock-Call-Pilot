@@ -109,6 +109,20 @@ describe("GroqTranscriber", () => {
     }
   });
 
+  it("keeps the status and reason Groq gave, for the server log", async () => {
+    const body = JSON.stringify({ error: { message: "Invalid API Key" } });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(body, { status: 401 })),
+    );
+    const error = await make()
+      .transcribe(audio, "audio/webm")
+      .catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(TranscribeError);
+    expect((error as TranscribeError).detail).toBe(`Groq answered 401: ${body}`);
+    expect((error as TranscribeError).detail).not.toContain("gsk-test");
+  });
+
   it("reports a body that is not JSON or has no text as stt_error", async () => {
     for (const body of ["not json", "null", "{}", '{"text":7}']) {
       vi.stubGlobal(
