@@ -12,12 +12,15 @@ services:
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
-      # Demo mode: placeholder content, banner on every page, fake speech-to-text and picker.
+      # Demo mode: placeholder content, banner on every page, fake line picker.
       # For live mode see "Render environment variables" in README.md.
       - key: MODE
         value: demo
+      # Free Whisper speech-to-text on Groq (decision D8). The key is entered in the dashboard.
       - key: STT
-        value: fake
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
       - key: PICKER
         value: fake
       # Render's free disk is wiped on every restart and sleep, so recordings live in R2.

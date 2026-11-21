@@ -142,6 +142,16 @@ describe("loadConfig in live mode", () => {
     expect(names(picker, "env.PICKER")).toBe(true);
   });
 
+  it("with STT=groq asks for the Groq key and not the ElevenLabs one", () => {
+    const groq = { ...LIVE_ENV, STT: "groq", ELEVENLABS_API_KEY: undefined };
+    const missing = problemsOf(() => loadConfig(makeDir(), groq));
+    expect(missing).toHaveLength(1);
+    expect(names(missing, "env.GROQ_API_KEY")).toBe(true);
+    expect(() => loadConfig(makeDir(), { ...groq, GROQ_API_KEY: "g-key" })).not.toThrow();
+    const empty = problemsOf(() => loadConfig(makeDir(), { ...groq, GROQ_API_KEY: "" }));
+    expect(names(empty, "env.GROQ_API_KEY")).toBe(true);
+  });
+
   it("names a missing API key for each real adapter", () => {
     const stt = problemsOf(() =>
       loadConfig(makeDir(), { ...LIVE_ENV, ELEVENLABS_API_KEY: undefined }),

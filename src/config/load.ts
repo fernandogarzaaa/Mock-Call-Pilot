@@ -164,6 +164,8 @@ export function loadConfig(dir: string, env: Record<string, string | undefined>)
     if (!env.ACCESS_CODE) problems.push("env.ACCESS_CODE: not set");
     if (env.STT === "fake") {
       problems.push("env.STT: fake speech-to-text is not allowed in live mode");
+    } else if (env.STT === "groq") {
+      if (!env.GROQ_API_KEY) problems.push("env.GROQ_API_KEY: not set");
     } else if (!env.ELEVENLABS_API_KEY) {
       problems.push("env.ELEVENLABS_API_KEY: not set");
     }
