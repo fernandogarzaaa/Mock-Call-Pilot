@@ -7,11 +7,17 @@ const seed = JSON.parse(
   readFileSync(new URL("../../config/script.json", import.meta.url), "utf8"),
 ) as ScriptConfig;
 
-function inputFor(script: ScriptConfig, stage: Stage, used: string[] = []): PickInput {
+function inputFor(
+  script: ScriptConfig,
+  stage: Stage,
+  used: string[] = [],
+  recent: CallTurn[] = [],
+  candidateText = "hello",
+): PickInput {
   return {
     stage,
-    recentTurns: [],
-    candidateText: "hello",
+    recentTurns: recent,
+    candidateText,
     allowed: [
       ...script.lines.filter((l) => l.stage === stage).map((l) => ({ id: l.id, text: l.text })),
       ...script.objections
@@ -21,37 +27,122 @@ function inputFor(script: ScriptConfig, stage: Stage, used: string[] = []): Pick
   };
 }
 
+function turn(index: number, lineId: string, text: string): CallTurn {
+  return { index, clientMs: 1000, candidateText: "hello", prospect: { lineId, text } };
+}
+
 describe("FakePicker", () => {
   it("walks the seed graph from the first stage to a booked call", async () => {
     const picker = new FakePicker(seed);
     let stage: Stage = "d1_attention";
     const visited: string[] = [];
+    const recent: CallTurn[] = [];
     let ended: string | undefined;
 
     for (let i = 0; i < 20 && ended === undefined; i++) {
-      const { lineId } = await picker.pick(inputFor(seed, stage));
+      const { lineId } = await picker.pick(inputFor(seed, stage, [], recent));
       const line = seed.lines.find((l) => l.id === lineId);
       expect(line).toBeDefined();
       visited.push(lineId);
+      recent.push(turn(recent.length, lineId, line?.text ?? ""));
       if (line?.endsCall !== undefined) ended = line.endsCall;
       else stage = line?.nextStage ?? stage;
     }
 
     expect(ended).toBe("booked");
-    expect(visited).toEqual(["d1.okay", "d2.next", "fc.count", "d3.agree", "d4.seeinvite"]);
+    expect(visited).toEqual([
+      "d1.hello",
+      "d1.okay",
+      "d2.next",
+      "fc.count",
+      "d3.agree",
+      "d4.seeinvite",
+    ]);
   });
 
-  it("returns the first stage-advancing line, skipping lines that keep the stage", async () => {
+  it("answers the candidate's opening instead of a fixed first line", async () => {
     const picker = new FakePicker(seed);
-    const result = await picker.pick(inputFor(seed, "d1_attention"));
+    const cases: [string, string][] = [
+      ["Hi, is this John?", "d1.speaking"],
+      ["John?", "d1.whos"],
+      ["Hi John", "d1.whos"],
+      ["Can I have 30 seconds?", "d1.goahead"],
+      ["Hi John, I'm Sarah from Can-Am Wireless", "obj.busy"],
+      ["hello", "d1.hello"],
+    ];
+    for (const [text, expected] of cases) {
+      const { lineId } = await picker.pick(inputFor(seed, "d1_attention", [], [], text));
+      expect(lineId, text).toBe(expected);
+    }
+  });
+
+  it("answers a GPS argument with the sales-pitch line, not the advance", async () => {
+    const picker = new FakePicker(seed);
+    const { lineId } = await picker.pick(
+      inputFor(seed, "d2_lawsuit", [], [turn(0, "d1.okay", "Okay.")], "We've already got GPS"),
+    );
+    expect(lineId).toBe("d2.listen");
+  });
+
+  it("escalates a meeting ask: send info, then think about it, then agree", async () => {
+    const picker = new FakePicker(seed);
+    const ask = "Can we set up twenty minutes this week?";
+    const first = await picker.pick(
+      inputFor(seed, "d3_pitch", [], [turn(0, "fc.count", "x")], ask),
+    );
+    expect(first.lineId).toBe("obj.sendinfo");
+    const second = await picker.pick(
+      inputFor(seed, "d3_pitch", ["obj.sendinfo"], [turn(0, "fc.count", "x")], ask),
+    );
+    expect(second.lineId).toBe("obj.thinkaboutit");
+    const third = await picker.pick(
+      inputFor(
+        seed,
+        "d3_pitch",
+        ["obj.sendinfo", "obj.thinkaboutit"],
+        [turn(0, "fc.count", "x")],
+        ask,
+      ),
+    );
+    expect(third.lineId).toBe("d3.agree");
+  });
+
+  it("ends the call when the candidate agrees to email or declines", async () => {
+    const picker = new FakePicker(seed);
+    const recent = [turn(0, "fc.count", "x")];
+    expect(
+      (await picker.pick(inputFor(seed, "d3_pitch", [], recent, "Sure, I'll send it over"))).lineId,
+    ).toBe("d3.consider");
+    expect(
+      (await picker.pick(inputFor(seed, "d3_pitch", [], recent, "No thanks, not interested")))
+        .lineId,
+    ).toBe("d3.hangup");
+  });
+
+  it("answers scheduling questions instead of booking at once", async () => {
+    const picker = new FakePicker(seed);
+    const recent = [turn(0, "d3.agree", "x")];
+    expect(
+      (await picker.pick(inputFor(seed, "d4_schedule", [], recent, "What is your email?"))).lineId,
+    ).toBe("d4.email");
+    expect(
+      (await picker.pick(inputFor(seed, "d4_schedule", [], recent, "Thursday works for me")))
+        .lineId,
+    ).toBe("d4.thursday");
+  });
+
+  it("returns the first stage-advancing line when no rule matches", async () => {
+    const picker = new FakePicker(seed);
+    const recent = [turn(0, "d1.hello", "Hello?")];
+    const result = await picker.pick(inputFor(seed, "d1_attention", [], recent));
     expect(result).toEqual({ lineId: "d1.okay" });
   });
 
-  it("never returns an objection, a prospect_ended line, or a stage-keeping line", async () => {
+  it("advances with a neutral line in each stage instead of stalling", async () => {
     const picker = new FakePicker(seed);
     const stages: Stage[] = ["d1_attention", "d2_lawsuit", "fleet_check", "d3_pitch"];
     for (const stage of stages) {
-      const { lineId } = await picker.pick(inputFor(seed, stage));
+      const { lineId } = await picker.pick(inputFor(seed, stage, [], [turn(0, "x", "x")]));
       const line = seed.lines.find((l) => l.id === lineId);
       expect(line, `${stage} returned a non-line id ${lineId}`).toBeDefined();
       expect(line?.endsCall).toBeUndefined();

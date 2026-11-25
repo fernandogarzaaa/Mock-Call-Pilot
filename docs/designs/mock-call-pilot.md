@@ -443,7 +443,13 @@ The picker receives the candidate's latest words separately from the earlier tur
 
 The fake picker exists for tests and for load runs on fakes. It is selected with `PICKER=fake`,
 separately from `MODE`. `MODE=demo` with `PICKER=claude` is how the owner sees the real AI on
-placeholder content before the gaps close.
+placeholder content before the gaps close. The fake picker is rule-based, not a fixed sequence:
+it reads the candidate's words and picks the line or objection that answers them (a greeting
+gets the greeting line, a GPS argument gets the sales-pitch line, a meeting ask escalates
+through send-info, think-about-it, then agree), and only falls back to advancing toward
+`booked` when nothing matches. The old version ignored the candidate entirely and always
+picked the first advancing line, so the prospect said "Okay." twice at the start of every
+call no matter what the candidate said; that was fixed 2026-11-26 after Inan heard it live.
 
 ### Speech-to-text
 
