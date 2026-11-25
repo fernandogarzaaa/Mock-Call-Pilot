@@ -68,6 +68,11 @@ const state = {
   // Sound check: the level meter runs from the moment the microphone is granted.
   audioCtx: null,
   analyser: null,
+  // The full-call recording mixes the microphone and the prospect's voice. The mix
+  // destination takes the mic and every prospect line; its stream is what the final
+  // call records, so the recording has both voices. Per-turn recordings stay mic-only.
+  mixDest: null,
+  mixStream: null,
   meterTimer: null,
   micPhase: "ask",
   micLabel: "",
@@ -702,16 +707,24 @@ async function requestMic(deviceId) {
     await state.audioCtx.resume().catch(() => {});
     state.analyser = state.audioCtx.createAnalyser();
     state.audioCtx.createMediaStreamSource(stream).connect(state.analyser);
+    // Mix the mic into the full-call recording. The prospect's voice joins the same
+    // destination in speakLine, so the recording has both voices on one track.
+    state.mixDest = state.audioCtx.createMediaStreamDestination();
+    state.audioCtx.createMediaStreamSource(stream).connect(state.mixDest);
+    state.mixStream = state.mixDest.stream;
     state.meterTimer = setInterval(readMeter, 100);
   }
   render();
 }
 
 // Each recording is a complete file: no timeslice, one chunk at stop.
-function record() {
+// The stream defaults to the microphone. The final call passes the mixed stream
+// (mic plus prospect voice) so the recording has both voices; a turn passes nothing
+// and stays mic-only, so the prospect's voice never reaches the transcriber.
+function record(stream) {
   const options = { audioBitsPerSecond: AUDIO_BITS_PER_SECOND };
   if (state.mimeType) options.mimeType = state.mimeType;
-  const recorder = new MediaRecorder(state.stream, options);
+  const recorder = new MediaRecorder(stream ?? state.stream, options);
   const chunks = [];
   recorder.addEventListener("dataavailable", (event) => {
     if (event.data.size > 0) chunks.push(event.data);
@@ -758,7 +771,7 @@ async function startCall() {
   state.id = session.id;
   state.limitMs = session.maxCallMinutes * 60000;
   resetCall();
-  state.full = record();
+  state.full = record(state.mixStream ?? state.stream);
   state.startedAt = performance.now();
   state.timer = setInterval(tick, 250);
   go({ type: "start", confirmed: state.confirmTicked });
@@ -887,6 +900,19 @@ async function speakLine(text, token) {
   if (gen !== state.callGen || seq !== speechSeq || !blob || blob.size === 0) return;
   const audio = new Audio(URL.createObjectURL(blob));
   state.voice = audio;
+  // Route the prospect's voice through the audio graph when one exists: to the speakers
+  // so the candidate hears it, and to the mix destination so the final-call recording
+  // has it. If that fails, the element still plays directly and the line is on screen.
+  if (state.audioCtx && state.mixDest) {
+    try {
+      await state.audioCtx.resume().catch(() => {});
+      const source = state.audioCtx.createMediaElementSource(audio);
+      source.connect(state.audioCtx.destination);
+      source.connect(state.mixDest);
+    } catch {
+      // Plain playback below.
+    }
+  }
   setSpeaking(true);
   const done = () => {
     if (state.voice === audio) {

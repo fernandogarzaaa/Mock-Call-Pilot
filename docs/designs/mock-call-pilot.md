@@ -291,6 +291,15 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
         Harold scores against a fixed script, so a generative John makes scoring less
         standardized, and he can occasionally say something off-script. The scripted picker
         stays available by unsetting `PROSPECT=generative`.
+*   **D11, the recording has both voices (2026-11-26, Rhieza).** Rhieza tested the fixed pilot
+    and asked for the AI voice in the call recording: it only had her voice, not John's. The
+    full-call recorder only captured the microphone, and the prospect's voice played through
+    the speakers, so it never entered the recording. Now the page mixes both into one track:
+    the microphone and every prospect line go through a `MediaStreamDestination` in the
+    browser, and the final call records that mixed stream. Per-turn recordings stay
+    microphone-only, so the prospect's voice never reaches the transcriber. If the audio
+    graph is unavailable, the prospect still plays directly and the recording falls back to
+    the microphone alone.
     *   The script is now integrated from Rhieza's prospect script doc (the 9-stage John Smith
         script, Lone Mesa Site Services). Judgment calls: `d2.listen` keeps its id even though
         the text is now "Sounds like a sales pitch to me."; `d3.consider` ("Yeah, send it
