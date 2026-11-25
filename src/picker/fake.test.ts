@@ -50,14 +50,7 @@ describe("FakePicker", () => {
     }
 
     expect(ended).toBe("booked");
-    expect(visited).toEqual([
-      "d1.hello",
-      "d1.okay",
-      "d2.next",
-      "fc.count",
-      "d3.agree",
-      "d4.seeinvite",
-    ]);
+    expect(visited).toEqual(["d1.hello", "d1.okay", "d2.next", "d3.agree", "d4.seeinvite"]);
   });
 
   it("answers the candidate's opening instead of a fixed first line", async () => {
@@ -74,6 +67,20 @@ describe("FakePicker", () => {
       const { lineId } = await picker.pick(inputFor(seed, "d1_attention", [], [], text));
       expect(lineId, text).toBe(expected);
     }
+  });
+
+  it("answers a fleet question in the same turn, not one turn late", async () => {
+    const picker = new FakePicker(seed);
+    const { lineId } = await picker.pick(
+      inputFor(
+        seed,
+        "d2_lawsuit",
+        [],
+        [turn(0, "d1.okay", "Okay.")],
+        "How many trucks do you run?",
+      ),
+    );
+    expect(lineId).toBe("fc.count");
   });
 
   it("answers a GPS argument with the sales-pitch line, not the advance", async () => {
@@ -140,7 +147,7 @@ describe("FakePicker", () => {
 
   it("advances with a neutral line in each stage instead of stalling", async () => {
     const picker = new FakePicker(seed);
-    const stages: Stage[] = ["d1_attention", "d2_lawsuit", "fleet_check", "d3_pitch"];
+    const stages: Stage[] = ["d1_attention", "d2_lawsuit", "d3_pitch"];
     for (const stage of stages) {
       const { lineId } = await picker.pick(inputFor(seed, stage, [], [turn(0, "x", "x")]));
       const line = seed.lines.find((l) => l.id === lineId);

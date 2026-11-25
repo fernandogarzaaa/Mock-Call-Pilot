@@ -48,9 +48,12 @@ export class FakePicker implements LinePicker {
       }
       case "d2_lawsuit": {
         if (/gps|telematics|tracking|features|product/i.test(text)) return ["d2.listen"];
+        if (/truck|fleet|vehicles|how many/i.test(text)) return ["fc.count"];
         return [];
       }
       case "fleet_check": {
+        // Unreachable: fc.count now lives in d2_lawsuit, so the call never enters
+        // fleet_check. Kept so the stage still has a defined rule set.
         return [];
       }
       case "d3_pitch": {

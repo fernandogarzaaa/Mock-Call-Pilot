@@ -450,6 +450,11 @@ through send-info, think-about-it, then agree), and only falls back to advancing
 `booked` when nothing matches. The old version ignored the candidate entirely and always
 picked the first advancing line, so the prospect said "Okay." twice at the start of every
 call no matter what the candidate said; that was fixed 2026-11-26 after Inan heard it live.
+The truck line (fc.count) lives in d2_lawsuit, not its own fleet_check stage, so a fleet
+question is answered in the same turn it is asked instead of one turn late. That also
+matches the script's "only if asked" rule: when the candidate never asks, the call moves
+from d2_lawsuit straight to d3_pitch and the truck line is never spoken. fleet_check stays
+a named stage but the call never enters it.
 
 ### Speech-to-text
 

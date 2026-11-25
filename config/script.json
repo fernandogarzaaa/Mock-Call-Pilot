@@ -73,12 +73,12 @@
       "id": "d2.next",
       "stage": "d2_lawsuit",
       "text": "Okay.",
-      "nextStage": "fleet_check",
+      "nextStage": "d3_pitch",
       "approved": true
     },
     {
       "id": "fc.count",
-      "stage": "fleet_check",
+      "stage": "d2_lawsuit",
       "text": "Twenty-four trucks right now. Adding five more after the new year.",
       "nextStage": "d3_pitch",
       "approved": true
