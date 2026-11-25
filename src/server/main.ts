@@ -71,7 +71,7 @@ function buildSynthesizer(env: Env): Synthesizer {
     return new GroqSynthesizer(
       requireEnv(env, "GROQ_API_KEY"),
       env.GROQ_TTS_MODEL || "canopylabs/orpheus-v1-english",
-      env.GROQ_TTS_VOICE || "austin",
+      env.GROQ_TTS_VOICE || "daniel",
       env.GROQ_TTS_VOICE_FEMALE || "autumn",
     );
   }

@@ -240,9 +240,14 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
         A slow voice answer to an old line never plays over a newer one.
     *   Voice choice (2026-11-26, Inan): the candidate picks Male or Female on the Ready
         screen, before the call starts, and can change it between a practice call and the
-        final call. Male is `austin`, female is `autumn` (Inan picked autumn over diana and
+        final call. Male is `daniel`, female is `autumn` (Inan picked autumn over diana and
         hannah after hearing samples of all three). The page sends the choice with each
         speech request; the server only accepts `male` or `female` and defaults to male.
+    *   Male voice changed 2026-11-26 from `austin` to `daniel`. Austin hallucinated trailing
+        speech on short lines: "Hello?" came back as "Hello? Uhhh... Let's not." (4.2 seconds
+        of audio for a one-word line, verified by transcribing the TTS output). Daniel and
+        troy both say "Hello?" cleanly, and daniel is the new default. Troy is available via
+        `GROQ_TTS_VOICE=troy`.
     *   Opening (2026-11-26, Inan): the prospect speaks first. When a call starts, the
         prospect picks up with "Hello?" (line `d1.hello`) before the candidate speaks, the
         way a real call opens. The server seeds that line as turn 0 of the fresh state, so
