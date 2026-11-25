@@ -25,11 +25,25 @@ const CAUSES: readonly FallbackCause[] = [
 ];
 
 export function freshPractice(script: ScriptConfig, now: Date): PracticeState {
+  const opening = openingTurn(script);
   return {
     stage: script.stages[0] ?? "d1_attention",
     usedObjections: [],
-    turns: [],
+    turns: opening ? [opening] : [],
     startedAt: now.toISOString(),
+  };
+}
+
+/** The prospect's pickup greeting, as the opening turn of a call. The prospect speaks first
+ *  ("Hello?"), then the candidate answers. Returns null when the script has no greeting line. */
+export function openingTurn(script: ScriptConfig): CallTurn | null {
+  const line = script.lines.find((l) => l.id === "d1.hello" && l.approved);
+  if (!line) return null;
+  return {
+    index: 0,
+    clientMs: 0,
+    candidateText: "",
+    prospect: { lineId: line.id, text: line.text },
   };
 }
 

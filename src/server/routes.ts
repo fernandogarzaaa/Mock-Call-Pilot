@@ -15,7 +15,7 @@ import type {
   TurnInput,
 } from "../types/index.ts";
 import { PreconditionFailed, SynthesizeError, TranscribeError } from "../types/index.ts";
-import { asSession, freshPractice, parsePracticeState, toPractice } from "./practice.ts";
+import { asSession, freshPractice, openingTurn, parsePracticeState, toPractice } from "./practice.ts";
 import { callShell, messagePage, recordingPage } from "./views.ts";
 
 export interface AppDeps {
@@ -197,16 +197,20 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     }
 
     const id = randomBytes(16).toString("base64url");
+    const opening = openingTurn(config.script);
     const state: SessionState = {
       id,
       name,
       stage: config.script.stages[0] ?? "d1_attention",
       usedObjections: [],
-      turns: [],
+      turns: opening ? [opening] : [],
       startedAt: now().toISOString(),
     };
     await storage.putJson(stateKey(id), state, "0");
-    return c.json({ id, maxCallMinutes: config.maxCallMinutes }, 201);
+    return c.json(
+      { id, maxCallMinutes: config.maxCallMinutes, openingText: opening?.prospect.text ?? null },
+      201,
+    );
   });
 
   // Practice: same script, picker and limit as a real call, but nothing is ever stored.
@@ -220,7 +224,14 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     const given = typeof body === "object" && body !== null ? (body as { code?: unknown }) : {};
     if (!codeMatches(config.accessCode, given.code)) return c.json({ error: "bad_code" }, 403);
     const state = freshPractice(config.script, now());
-    return c.json({ state, maxCallMinutes: config.maxCallMinutes }, 201);
+    return c.json(
+      {
+        state,
+        maxCallMinutes: config.maxCallMinutes,
+        openingText: state.turns[0]?.prospect.text ?? null,
+      },
+      201,
+    );
   });
 
   app.post("/api/practice/turn", turnLimit, async (c) => {

@@ -762,6 +762,13 @@ async function startCall() {
   state.startedAt = performance.now();
   state.timer = setInterval(tick, 250);
   go({ type: "start", confirmed: state.confirmTicked });
+  // The prospect picks up first: speak the opening greeting, then the candidate answers.
+  if (session.openingText) {
+    state.turnIndex = 1;
+    state.lines.push(session.openingText);
+    addLine(session.openingText);
+    speakLine(session.openingText);
+  }
 }
 
 // Fresh per-call page state, shared by the final call, a practice call and Redo.
@@ -807,6 +814,13 @@ async function startPractice() {
   state.timer = setInterval(tick, 250);
   // Redo starts a practice call while already on the practice screen, so render directly.
   if (!go({ type: "practice" })) render();
+  // The prospect picks up first: speak the opening greeting, then the candidate answers.
+  if (body.openingText) {
+    state.turnIndex = 1;
+    state.lines.push(body.openingText);
+    addLine(body.openingText);
+    speakLine(body.openingText);
+  }
 }
 
 const REASON_WORDS = {

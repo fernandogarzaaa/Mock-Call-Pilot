@@ -338,6 +338,60 @@ describe("starting a session", () => {
   });
 });
 
+describe("the opening greeting", () => {
+  it("opens a final call with the prospect's Hello before the candidate speaks", async () => {
+    const { readFileSync } = await import("node:fs");
+    const seed = JSON.parse(
+      readFileSync(new URL("../../config/script.json", import.meta.url), "utf8"),
+    ) as ScriptConfig;
+    const h = await harness({ script: seed });
+    const res = await createSession(h, { code: CODE, name: "Ada" });
+    expect(res.status).toBe(201);
+    const created = await json<{ id: string; openingText: string | null }>(res);
+    expect(created.openingText).toBe("Hello?");
+    const state = await getState(h, created.id);
+    expect(state.turns).toEqual([
+      {
+        index: 0,
+        clientMs: 0,
+        candidateText: "",
+        prospect: { lineId: "d1.hello", text: "Hello?" },
+      },
+    ]);
+    // The candidate's first turn is index 1, not 0: turn 0 is the opening.
+    const first = await json<TurnBody>(await postTurn(h, created.id, "Hi, is this John?", 1));
+    expect(first.text).toBe("Yeah, speaking. Who's calling?");
+    expect(first.ended).toBe(false);
+  });
+
+  it("opens a practice call with the prospect's Hello in the state", async () => {
+    const { readFileSync } = await import("node:fs");
+    const seed = JSON.parse(
+      readFileSync(new URL("../../config/script.json", import.meta.url), "utf8"),
+    ) as ScriptConfig;
+    const h = await harness({ script: seed });
+    const res = await h.app.request("/api/practice", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: CODE }),
+    });
+    expect(res.status).toBe(201);
+    const body = await json<{
+      state: { turns: { index: number; prospect: { lineId: string; text: string } }[] };
+      openingText: string | null;
+    }>(res);
+    expect(body.openingText).toBe("Hello?");
+    expect(body.state.turns).toEqual([
+      {
+        index: 0,
+        clientMs: 0,
+        candidateText: "",
+        prospect: { lineId: "d1.hello", text: "Hello?" },
+      },
+    ]);
+  });
+});
+
 describe("the call page", () => {
   it("embeds a config block with exactly the listed keys and no caller replies", async () => {
     const h = await harness();

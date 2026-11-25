@@ -243,6 +243,13 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
         final call. Male is `austin`, female is `autumn` (Inan picked autumn over diana and
         hannah after hearing samples of all three). The page sends the choice with each
         speech request; the server only accepts `male` or `female` and defaults to male.
+    *   Opening (2026-11-26, Inan): the prospect speaks first. When a call starts, the
+        prospect picks up with "Hello?" (line `d1.hello`) before the candidate speaks, the
+        way a real call opens. The server seeds that line as turn 0 of the fresh state, so
+        it is in the transcript, and returns it as `openingText` on both start routes; the
+        page shows it and speaks it, then prompts the candidate. The candidate's first turn
+        is index 1. Before this fix the candidate spoke first into silence, which read as
+        not interactive even though the picker was already answering correctly.
     *   The full-call recorder only captures the microphone, so playback never enters the
         recording. The speaker-bleed risk is real and not fixed: the prospect's voice can leak
         into the candidate's mic through their speakers. Headphones are the answer.
