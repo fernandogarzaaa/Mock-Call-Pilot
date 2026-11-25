@@ -41,20 +41,76 @@ describe("FakePicker", () => {
     let stage: Stage = "d1_attention";
     const visited: string[] = [];
     const recent: CallTurn[] = [];
+    const used: string[] = [];
     let ended: string | undefined;
+    // A realistic call: each candidate line genuinely moves the call forward.
+    const script: [string, string][] = [
+      ["Hi, is this John?", "d1.speaking"],
+      ["Can I have 30 seconds?", "d1.goahead"],
+      ["How many trucks do you run?", "fc.count"],
+      ["Can we set up twenty minutes this week?", "obj.sendinfo"],
+      ["Can we set up twenty minutes this week?", "obj.thinkaboutit"],
+      ["Can we set up twenty minutes this week?", "d3.agree"],
+      ["Thursday works for me", "d4.thursday"],
+    ];
 
-    for (let i = 0; i < 20 && ended === undefined; i++) {
-      const { lineId } = await picker.pick(inputFor(seed, stage, [], recent));
+    for (const [text, expected] of script) {
+      const { lineId } = await picker.pick(inputFor(seed, stage, used, recent, text));
+      expect(lineId, text).toBe(expected);
       const line = seed.lines.find((l) => l.id === lineId);
-      expect(line).toBeDefined();
+      const objection = seed.objections.find((o) => o.id === lineId);
       visited.push(lineId);
-      recent.push(turn(recent.length, lineId, line?.text ?? ""));
+      recent.push(turn(recent.length, lineId, line?.text ?? objection?.prospectLine ?? ""));
+      if (objection !== undefined) used.push(objection.id);
       if (line?.endsCall !== undefined) ended = line.endsCall;
-      else stage = line?.nextStage ?? stage;
+      else if (line !== undefined) stage = line.nextStage;
     }
 
     expect(ended).toBe("booked");
-    expect(visited).toEqual(["d1.hello", "d1.okay", "d2.next", "d3.agree", "d4.seeinvite"]);
+    expect(visited).toEqual([
+      "d1.speaking",
+      "d1.goahead",
+      "fc.count",
+      "obj.sendinfo",
+      "obj.thinkaboutit",
+      "d3.agree",
+      "d4.thursday",
+    ]);
+  });
+
+  it("stays and prompts on filler instead of racing to booked", async () => {
+    const picker = new FakePicker(seed);
+    const open = [turn(0, "d1.hello", "Hello?")];
+    // "Hello?" back at the prospect asks who they are, it does not advance.
+    expect((await picker.pick(inputFor(seed, "d1_attention", [], open, "Hello?"))).lineId).toBe(
+      "d1.whos",
+    );
+    // "Okay." to "who's this?" asks who they are again, it does not advance.
+    expect(
+      (
+        await picker.pick(
+          inputFor(seed, "d1_attention", [], [turn(0, "d1.whos", "Yeah... who's this?")], "Okay."),
+        )
+      ).lineId,
+    ).toBe("d1.whos");
+    // "Okay." in the lawsuit stage prompts for the story, it does not advance.
+    expect(
+      (await picker.pick(inputFor(seed, "d2_lawsuit", [], [turn(0, "d1.okay", "Okay.")], "Okay.")))
+        .lineId,
+    ).toBe("d2.listen");
+    // "Okay." in the pitch asks for information, it does not agree to a meeting.
+    expect(
+      (await picker.pick(inputFor(seed, "d3_pitch", [], [turn(0, "fc.count", "x")], "Okay.")))
+        .lineId,
+    ).toBe("obj.sendinfo");
+    // A vague "sure" in scheduling asks what times they have, it does not book.
+    expect(
+      (
+        await picker.pick(
+          inputFor(seed, "d4_schedule", [], [turn(0, "d3.agree", "x")], "Sure, sure, why not?"),
+        )
+      ).lineId,
+    ).toBe("d4.time");
   });
 
   it("answers the candidate's opening instead of a fixed first line", async () => {
@@ -147,7 +203,7 @@ describe("FakePicker", () => {
   it("returns the first stage-advancing line when no rule matches", async () => {
     const picker = new FakePicker(seed);
     const recent = [turn(0, "d1.hello", "Hello?")];
-    const result = await picker.pick(inputFor(seed, "d1_attention", [], recent));
+    const result = await picker.pick(inputFor(seed, "d1_attention", [], recent, "xyz"));
     expect(result).toEqual({ lineId: "d1.okay" });
   });
 
@@ -155,7 +211,7 @@ describe("FakePicker", () => {
     const picker = new FakePicker(seed);
     const stages: Stage[] = ["d1_attention", "d2_lawsuit", "d3_pitch"];
     for (const stage of stages) {
-      const { lineId } = await picker.pick(inputFor(seed, stage, [], [turn(0, "x", "x")]));
+      const { lineId } = await picker.pick(inputFor(seed, stage, [], [turn(0, "x", "x")], "xyz"));
       const line = seed.lines.find((l) => l.id === lineId);
       expect(line, `${stage} returned a non-line id ${lineId}`).toBeDefined();
       expect(line?.endsCall).toBeUndefined();

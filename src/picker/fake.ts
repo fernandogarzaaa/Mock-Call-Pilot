@@ -35,6 +35,12 @@ export class FakePicker implements LinePicker {
   #rulesFor(input: PickInput): string[] {
     const text = input.candidateText.toLowerCase();
     const firstTurn = input.recentTurns.length === 0;
+    // A bare greeting or acknowledgment with no content is filler, not an answer.
+    // It gets a prompt that stays in the stage, never an advance or a booking.
+    const greetingOnly = /^\W*(hi|hello|hey)\W*[?.!]*\W*$/.test(text);
+    const ackOnly = /^\W*(okay|ok|yeah|yep|sure|uh huh|mm hmm|right|got it)\W*[?.!]*\W*$/.test(
+      text,
+    );
     switch (input.stage) {
       case "d1_attention": {
         if (/is this john/i.test(text)) return ["d1.speaking"];
@@ -47,11 +53,13 @@ export class FakePicker implements LinePicker {
           return ["d1.speaking"];
         }
         if (firstTurn) return ["d1.hello"];
+        if (greetingOnly || ackOnly || /why not/i.test(text)) return ["d1.whos"];
         return [];
       }
       case "d2_lawsuit": {
         if (/gps|telematics|tracking|features|product/i.test(text)) return ["d2.listen"];
         if (/truck|fleet|vehicles|how many/i.test(text)) return ["fc.count"];
+        if (ackOnly || /why not/i.test(text)) return ["d2.listen"];
         return [];
       }
       case "fleet_check": {
@@ -69,12 +77,14 @@ export class FakePicker implements LinePicker {
         ) {
           return ["obj.sendinfo", "obj.thinkaboutit", "d3.agree"];
         }
+        if (ackOnly || /why not/i.test(text)) return ["obj.sendinfo", "obj.thinkaboutit"];
         return [];
       }
       case "d4_schedule": {
         if (/email/i.test(text)) return ["d4.email"];
         if (/what.*about|what.*for|remind me/i.test(text)) return ["d4.about"];
         if (/thursday|december 3/i.test(text)) return ["d4.thursday"];
+        if (ackOnly || /why not/i.test(text)) return ["d4.time"];
         return [];
       }
     }
