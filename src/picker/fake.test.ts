@@ -61,6 +61,8 @@ describe("FakePicker", () => {
       ["Hi John", "d1.whos"],
       ["Can I have 30 seconds?", "d1.goahead"],
       ["Hi John, I'm Sarah from Can-Am Wireless", "obj.busy"],
+      ["Hi, I'm Fernando Garza.", "d1.speaking"],
+      ["I'm Fernando Garza.", "d1.speaking"],
       ["hello", "d1.hello"],
     ];
     for (const [text, expected] of cases) {

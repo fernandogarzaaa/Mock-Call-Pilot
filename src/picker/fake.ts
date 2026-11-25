@@ -43,6 +43,9 @@ export class FakePicker implements LinePicker {
         if (/can-am|telematics|my name is|this is .* from|i'?m calling/i.test(text)) {
           return ["obj.busy", "d1.goahead"];
         }
+        if (/^(hi|hello|hey)[,.]?\s+i'?m\s+\w+|^i'?m\s+\w+/.test(text)) {
+          return ["d1.speaking"];
+        }
         if (firstTurn) return ["d1.hello"];
         return [];
       }
