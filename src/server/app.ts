@@ -1,6 +1,12 @@
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import type { LinePicker, ResolvedConfig, Storage, Transcriber } from "../types/index.ts";
+import type {
+  LinePicker,
+  ResolvedConfig,
+  Storage,
+  Synthesizer,
+  Transcriber,
+} from "../types/index.ts";
 import { registerRoutes } from "./routes.ts";
 import { messagePage } from "./views.ts";
 
@@ -8,6 +14,7 @@ export interface BuildAppOptions {
   config: ResolvedConfig;
   storage: Storage;
   transcriber: Transcriber;
+  synthesizer: Synthesizer;
   picker: LinePicker;
   now?: () => Date;
 }

@@ -162,13 +162,14 @@ export function loadConfig(dir: string, env: Record<string, string | undefined>)
     }
     if (!fallbackLine.approved) problems.push("fallbackLine.approved: not client-approved");
     if (!env.ACCESS_CODE) problems.push("env.ACCESS_CODE: not set");
+    // STT and TTS share the Groq key, so one missing-key problem covers both.
+    const groqKeyNeeded = env.STT === "groq" || env.TTS === "groq";
     if (env.STT === "fake") {
       problems.push("env.STT: fake speech-to-text is not allowed in live mode");
-    } else if (env.STT === "groq") {
-      if (!env.GROQ_API_KEY) problems.push("env.GROQ_API_KEY: not set");
-    } else if (!env.ELEVENLABS_API_KEY) {
+    } else if (env.STT !== "groq" && !env.ELEVENLABS_API_KEY) {
       problems.push("env.ELEVENLABS_API_KEY: not set");
     }
+    if (groqKeyNeeded && !env.GROQ_API_KEY) problems.push("env.GROQ_API_KEY: not set");
     if (env.PICKER === "fake") {
       problems.push("env.PICKER: fake line picker is not allowed in live mode");
     } else if (!env.ANTHROPIC_API_KEY) {

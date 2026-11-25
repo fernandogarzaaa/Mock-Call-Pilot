@@ -124,6 +124,12 @@ export type TurnInput = { text: string } | { sttError: "stt_error" | "stt_timeou
 export interface Transcriber {
   transcribe(audio: Uint8Array, mime: string): Promise<string>;
 }
+/** Which prospect voice the candidate chose. Male is the default. */
+export type VoiceChoice = "male" | "female";
+/** Turns a prospect line into spoken audio. The voice only ever speaks script text. */
+export interface Synthesizer {
+  synthesize(text: string, voice?: VoiceChoice): Promise<{ audio: Uint8Array; mime: string }>;
+}
 export interface PickInput {
   stage: Stage;
   /** Completed turns only, at most 6, oldest first. */
@@ -150,6 +156,16 @@ export class TranscribeError extends Error {
   /** What the vendor answered, for the server log only. Never shown to a candidate. */
   readonly detail: string;
   constructor(kind: TranscribeError["kind"], detail = "") {
+    super(kind);
+    this.kind = kind;
+    this.detail = detail;
+  }
+}
+export class SynthesizeError extends Error {
+  readonly kind: "tts_error" | "tts_timeout";
+  /** What the vendor answered, for the server log only. Never shown to a candidate. */
+  readonly detail: string;
+  constructor(kind: SynthesizeError["kind"], detail = "") {
     super(kind);
     this.kind = kind;
     this.detail = detail;

@@ -8,7 +8,7 @@
   },
   "packageManager": "pnpm@12.15.0",
   "scripts": {
-    "dev": "MODE=demo STORAGE=fs STT=fake PICKER=fake node --env-file-if-exists=.env --watch src/server/main.ts",
+    "dev": "MODE=demo STORAGE=fs STT=fake PICKER=fake TTS=fake node --env-file-if-exists=.env --watch src/server/main.ts",
     "dev:real": "MODE=demo STORAGE=fs STT=scribe PICKER=claude node --env-file-if-exists=.env src/server/main.ts",
     "start": "node src/server/main.ts",
     "test": "vitest run",

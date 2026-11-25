@@ -129,8 +129,23 @@ describe("booting the real entry point", () => {
     const { code, stderr } = await runToExit(child);
     expect(code).toBe(1);
     expect(stderr).toContain("gaps.retentionDays");
-    expect(stderr).toContain("persona.firstName");
     expect(stderr).toContain("env.ACCESS_CODE");
+    // The persona is filled from Rhieza's script, so it is no longer named as a gap.
+    expect(stderr).not.toContain("persona.firstName");
+    expect(stderr).not.toContain("persona.companyName");
+    expect(stderr).not.toContain("persona.fleetSize");
+    // Every objection is still unapproved, so all seven are named.
+    for (const id of [
+      "obj.busy",
+      "obj.notinterested",
+      "obj.havetelematics",
+      "obj.sendinfo",
+      "obj.nobudget",
+      "obj.callback",
+      "obj.thinkaboutit",
+    ]) {
+      expect(stderr).toContain(`objections.${id}.approved`);
+    }
   });
 
   it("exits 1 when a real adapter is chosen without its key", { timeout: 30_000 }, async () => {

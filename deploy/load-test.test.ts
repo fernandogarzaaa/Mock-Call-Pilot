@@ -10,7 +10,14 @@ import { fixtureScript } from "../src/script/fixture.ts";
 import { buildApp } from "../src/server/app.ts";
 import { FsStorage } from "../src/storage/fs.ts";
 import { FakeTranscriber } from "../src/stt/fake.ts";
-import type { LinePicker, ResolvedConfig, ScriptConfig, Transcriber } from "../src/types/index.ts";
+import { FakeSynthesizer } from "../src/tts/fake.ts";
+import type {
+  LinePicker,
+  ResolvedConfig,
+  ScriptConfig,
+  Synthesizer,
+  Transcriber,
+} from "../src/types/index.ts";
 import { PickerError } from "../src/types/index.ts";
 import { parseLoadTestArgs, runLoadTest, UsageError } from "./load-test.ts";
 
@@ -34,6 +41,7 @@ interface Fakes {
   script?: ScriptConfig;
   picker?: LinePicker;
   transcriber?: Transcriber;
+  synthesizer?: Synthesizer;
 }
 
 /** buildApp on a random local port, with fake vendors and a temporary filesystem bucket. */
@@ -53,6 +61,7 @@ async function startApp(fakes: Fakes = {}): Promise<string> {
     config,
     storage: new FsStorage(await tempDir(), "test-secret"),
     transcriber: fakes.transcriber ?? new FakeTranscriber(),
+    synthesizer: fakes.synthesizer ?? new FakeSynthesizer(),
     picker: fakes.picker ?? new FakePicker(script),
   });
   return await new Promise((resolve) => {

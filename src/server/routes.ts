@@ -9,11 +9,12 @@ import type {
   ResolvedConfig,
   SessionState,
   Storage,
+  Synthesizer,
   Transcriber,
   Transcript,
   TurnInput,
 } from "../types/index.ts";
-import { PreconditionFailed, TranscribeError } from "../types/index.ts";
+import { PreconditionFailed, SynthesizeError, TranscribeError } from "../types/index.ts";
 import { asSession, freshPractice, parsePracticeState, toPractice } from "./practice.ts";
 import { callShell, messagePage, recordingPage } from "./views.ts";
 
@@ -21,6 +22,7 @@ export interface AppDeps {
   config: ResolvedConfig;
   storage: Storage;
   transcriber: Transcriber;
+  synthesizer: Synthesizer;
   picker: LinePicker;
   now: () => Date;
 }
@@ -41,6 +43,7 @@ const ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 const MEGABYTE = 1024 * 1024;
 const TURN_BODY_LIMIT = 2 * MEGABYTE;
 const END_BODY_LIMIT = 25 * MEGABYTE;
+const SPEECH_BODY_LIMIT = 4 * 1024;
 const AUDIO_URL_TTL_SEC = 3600;
 const MAX_NAME_LENGTH = 80;
 const AUDIO_EXTENSIONS = new Map([
@@ -144,12 +147,21 @@ function isFileStore(storage: Storage): storage is Storage & FileStore {
   return "verify" in storage && "read" in storage;
 }
 
+/** The voice only ever speaks script text: a line, an objection's prospect line, or the fallback. */
+function isScriptText(config: ResolvedConfig, text: string): boolean {
+  if (text === "") return false;
+  if (config.script.fallbackLine.text === text) return true;
+  if (config.script.lines.some((line) => line.text === text)) return true;
+  return config.script.objections.some((objection) => objection.prospectLine === text);
+}
+
 export function registerRoutes(app: Hono, deps: AppDeps): void {
-  const { config, storage, transcriber, picker, now } = deps;
+  const { config, storage, transcriber, synthesizer, picker, now } = deps;
   const demo = config.mode === "demo";
   const tooLarge = (c: Context) => c.json({ error: "too_large" }, 413);
   const turnLimit = bodyLimit({ maxSize: TURN_BODY_LIMIT, onError: tooLarge });
   const endLimit = bodyLimit({ maxSize: END_BODY_LIMIT, onError: tooLarge });
+  const speechLimit = bodyLimit({ maxSize: SPEECH_BODY_LIMIT, onError: tooLarge });
 
   app.get("/healthz", (c) => c.text("ok"));
 
@@ -244,6 +256,27 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     };
     if (step.ended) result.endReason = step.state.endReason;
     return c.json(result);
+  });
+
+  // Speech: the prospect's line as audio. The page asks for it after a turn, so the text
+  // shows at once and the voice follows. A failure here never breaks the call: the page
+  // just shows the text.
+  app.post("/api/speech", speechLimit, async (c) => {
+    const form = await readForm(c);
+    if (!codeMatches(config.accessCode, form.code)) return c.json({ error: "bad_code" }, 403);
+    const text = typeof form.text === "string" ? form.text : "";
+    if (!isScriptText(config, text)) return c.json({ error: "bad_text" }, 422);
+    const voice = form.voice === undefined ? "male" : form.voice;
+    if (voice !== "male" && voice !== "female") return c.json({ error: "bad_voice" }, 422);
+    try {
+      const { audio, mime } = await synthesizer.synthesize(text, voice);
+      return new Response(audio, { headers: { "content-type": mime } });
+    } catch (error) {
+      const known = error instanceof SynthesizeError;
+      const detail = known ? error.detail : String(error);
+      console.warn(JSON.stringify({ event: "tts_failed", detail }));
+      return c.json({ error: "tts_failed" }, 502);
+    }
   });
 
   app.post("/api/s/:id/turn", turnLimit, async (c) => {

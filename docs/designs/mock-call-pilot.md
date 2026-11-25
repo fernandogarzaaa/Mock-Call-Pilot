@@ -11,7 +11,7 @@
 ## Overview
 
 This is a web page where a sales candidate runs one mock cold call against an AI prospect.
-The AI prospect's lines appear as text on screen, and the candidate speaks their own lines
+The AI prospect's lines appear as text on screen and are read aloud by an AI voice (D9), and the candidate speaks their own lines
 into the microphone. The page records the candidate's audio for the whole call, and each
 spoken turn is transcribed. When the call ends, the server creates a public recording page
 (an audio player plus the transcript, with no login) and shows the candidate its link. The
@@ -77,16 +77,17 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
 ## Non-Goals
 
 *   AI scoring, grading or rating of any kind. Harold scores manually.
-*   The AI speaking (voice AI). Phase 2.
 *   A booking or scheduling system (pending gap 2).
 *   Redo of the final call. Only practice calls can be redone (D4).
 *   Recording, storing or linking practice calls (D4).
 *   The under-10 fleet branch, the Lost jobs and Growing pains paths, the cold voicemail, and
     the follow-up email.
 *   A results dashboard, reviewer accounts or an admin UI.
-*   Audio of the AI's side. It has no audio; its lines are text.
 *   Any cost figure, pricing page or build date.
 *   Production readiness. This is a pilot.
+*   Superseded by D9 (2026-11-26): the AI speaking (voice AI) and audio of the AI's side. The
+    prospect's lines are now read aloud by an Orpheus voice on Groq, with a speaking state on
+    the page and text-only fallback when synthesis fails.
 
 ## Decisions
 
@@ -215,6 +216,48 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   Past a limit Groq answers 429. That turn falls back like any failed transcription
         (`stt_error`); the recording is unaffected.
     *   Accuracy on accented speech is not measured yet. Scribe stays available (`STT=scribe`).
+
+*   **D9, the prospect speaks: Groq Orpheus voice (2026-11-26, Inan).** Rhieza asked for an AI
+    voice so the call sounds like a real phone call, and for the real script to be integrated.
+    Both landed together. The voice is Groq text-to-speech, model `canopylabs/orpheus-v1-english`,
+    voice `austin` (male, Texas-neutral), because Groq removed PlayAI on 2025-12-31 and Orpheus
+    is what the speech endpoint now offers. ElevenLabs was ruled out by Inan (paid), and
+    browser speech synthesis was ruled out (robotic).
+    *   `TTS=groq` selects the Groq synthesizer; `TTS=fake` is the default and returns 0.1s of
+        silence, so the page stays text only unless the voice is turned on. It reuses the same
+        `GROQ_API_KEY` as STT. `GROQ_TTS_MODEL` and `GROQ_TTS_VOICE` override the model and
+        voice.
+    *   Orpheus returns WAV only, and caps each request at 200 characters. The adapter refuses
+        longer text without calling Groq and never truncates, so the voice never says a cut-off
+        line. Every prospect line is under the cap.
+    *   `POST /api/speech` takes the access code and a text, and answers the audio bytes. The
+        text must match a line in `config/script.json`, an objection's `prospectLine`, or the
+        fallback text, so the voice can only speak script text (the same G1 rule as the screen).
+        A TTS failure answers 502 `tts_failed` and the page falls back to text only; it never
+        breaks the call.
+    *   The page plays each prospect line as it appears, with one reused Audio element, a
+        "Prospect is speaking…" state in the status line, and the previous line stopped first.
+        A slow voice answer to an old line never plays over a newer one.
+    *   Voice choice (2026-11-26, Inan): the candidate picks Male or Female on the Ready
+        screen, before the call starts, and can change it between a practice call and the
+        final call. Male is `austin`, female is `autumn` (Inan picked autumn over diana and
+        hannah after hearing samples of all three). The page sends the choice with each
+        speech request; the server only accepts `male` or `female` and defaults to male.
+    *   The full-call recorder only captures the microphone, so playback never enters the
+        recording. The speaker-bleed risk is real and not fixed: the prospect's voice can leak
+        into the candidate's mic through their speakers. Headphones are the answer.
+    *   Cost at list price is $22 per 1M characters; one full call is roughly 1,000 characters
+        of prospect text, about $0.02. Free-tier figures are third-party, not Groq's own page.
+    *   Open risk: one third-party source says an org admin must accept the Orpheus model terms
+        in the Groq console once before the API works; another says no such step. If the first
+        real TTS call fails, Inan may need to accept the terms in the console.
+    *   The script is now integrated from Rhieza's prospect script doc (the 9-stage John Smith
+        script, Lone Mesa Site Services). Judgment calls: `d2.listen` keeps its id even though
+        the text is now "Sounds like a sales pitch to me."; `d3.consider` ("Yeah, send it
+        over,") gained `endsCall: prospect_ended`; the price line "You tell me, you called me."
+        and the "Look, I'm busy. Can you get to the point?" line are left out, with no slot
+        for them; the caller replies are still placeholders, so live mode still refuses to
+        start and the pilot stays in demo mode.
 
 ## Open Questions
 
@@ -345,16 +388,21 @@ browser page is plain JavaScript.
         that reason, and its `nextStage` is ignored.
     *   Example: `{ "id": "d1.who", "stage": "d1_attention", "text": "Who is this...",
         "nextStage": "d1_attention", "approved": true }`.
-    *   Four lines come from the client's script and start approved: "Who is this...", "I'm
-        busy.", "This is a bad time." and "Okay." Every other line starts with
-        `approved: false`.
+    *   All 21 lines now come from Rhieza's prospect script doc (2026-11-26) and are approved.
+        The persona is John Smith of Lone Mesa Site Services, 24 trucks. Two doc lines were
+        left out with no slot for them: the price line "You tell me, you called me." and
+        "Look, I'm busy. Can you get to the point?" The caller replies are still
+        placeholders, so live mode still refuses to start.
 *   **`objections`**: per D1, each has `id`, `prospectLine`, `callerReply`, `allowedStages` and
     `approved`.
     *   Showing an objection does not change the stage. The call stays where it was, so the
         candidate's answer is judged in that stage.
     *   Each objection is used at most once per call.
     *   The brief's six are seeded as placeholders: too busy, not interested, already have
-        telematics, send info, no budget, call back later.
+        telematics, send info, no budget, call back later. Three now carry real prospect lines
+        from Rhieza's doc (busy, already have telematics, send info), plus a seventh,
+        think-about-it. Every `callerReply` is still a placeholder, so every objection is
+        still unapproved and live mode still refuses to start.
 *   **`fallbackLine`**: one text (for example "Sorry, could you say that again?") plus
     `approved`.
     *   It is not a stage line and is never in the allowed list.

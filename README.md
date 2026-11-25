@@ -50,23 +50,26 @@ The pilot deploys to **Render (free plan) plus a Cloudflare R2 bucket (free tier
 
 Names only. Values go in the Render dashboard, never in the repo.
 
-| Variable | Needed for | Notes |
-|---|---|---|
-| `R2_ACCOUNT_ID` | demo and live | Cloudflare account id; the endpoint is `https://<id>.r2.cloudflarestorage.com` |
-| `R2_BUCKET` | demo and live | private bucket name |
-| `R2_ACCESS_KEY_ID` | demo and live | R2 API token with Object Read & Write on that bucket |
-| `R2_SECRET_ACCESS_KEY` | demo and live | from the same R2 API token |
-| `ACCESS_CODE` | demo and live | shared code in the call link (`/call?code=...`) |
-| `GROQ_API_KEY` | when `STT=groq` | Whisper transcription on Groq's free tier (about 8 hours of audio a day) |
-| `ELEVENLABS_API_KEY` | when `STT` is unset or `scribe` | Scribe transcription (paid) |
-| `ANTHROPIC_API_KEY` | live only | line picker (`claude-opus-5-5`, effort `low`) |
-| `MODE` | set in render.yaml | `demo` now; `live` once every gap is filled |
-| `STT` | set in render.yaml | `fake`, `groq` (free) or `scribe`; `fake` is refused in live mode |
-| `PICKER` | set in render.yaml | `fake` in demo; delete it for live |
+| Variable                | Needed for                      | Notes                                                                                               |
+| ----------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `R2_ACCOUNT_ID`         | demo and live                   | Cloudflare account id; the endpoint is `https://<id>.r2.cloudflarestorage.com`                      |
+| `R2_BUCKET`             | demo and live                   | private bucket name                                                                                 |
+| `R2_ACCESS_KEY_ID`      | demo and live                   | R2 API token with Object Read & Write on that bucket                                                |
+| `R2_SECRET_ACCESS_KEY`  | demo and live                   | from the same R2 API token                                                                          |
+| `ACCESS_CODE`           | demo and live                   | shared code in the call link (`/call?code=...`)                                                     |
+| `GROQ_API_KEY`          | when `STT=groq` or `TTS=groq`   | Whisper transcription and Orpheus text-to-speech on Groq's free tier (about 8 hours of audio a day) |
+| `ELEVENLABS_API_KEY`    | when `STT` is unset or `scribe` | Scribe transcription (paid)                                                                         |
+| `ANTHROPIC_API_KEY`     | live only                       | line picker (`claude-opus-5-5`, effort `low`)                                                       |
+| `MODE`                  | set in render.yaml              | `demo` now; `live` once every gap is filled                                                         |
+| `STT`                   | set in render.yaml              | `fake`, `groq` (free) or `scribe`; `fake` is refused in live mode                                   |
+| `TTS`                   | set in render.yaml              | `fake` or `groq` (free); `fake` is the default and answers silence, so the page stays text only     |
+| `GROQ_TTS_MODEL`        | when `TTS=groq`                 | Orpheus model, default `canopylabs/orpheus-v1-english`                                              |
+| `GROQ_TTS_VOICE`        | when `TTS=groq`                 | Orpheus male voice, default `austin`                                                                |
+| `GROQ_TTS_VOICE_FEMALE` | when `TTS=groq`                 | Orpheus female voice, default `autumn` (chosen by Inan 2026-11-26)                                  |
+| `PICKER`                | set in render.yaml              | `fake` in demo; delete it for live                                                                  |
 
 No public R2 URL is needed: audio is served through presigned links that need no login.
 Demo mode needs only the R2 variables and `ACCESS_CODE`. Recordings need R2 even in demo
 mode, because Render's free disk is wiped on every restart and sleep.
 
 `deploy/deploy.sh` (Google Cloud) is the superseded deploy path and is not used.
-

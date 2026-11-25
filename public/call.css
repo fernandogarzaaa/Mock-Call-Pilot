@@ -407,6 +407,38 @@ section > button {
   margin-top: 1.75rem;
 }
 
+/* Prospect voice: two plain buttons, the chosen one filled. */
+.voice-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.voice-choice p {
+  width: 100%;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+button.voice {
+  padding: 0.6rem 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+button.voice.selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
 .choice {
   display: grid;
   gap: 0.25rem 1.5rem;
@@ -630,6 +662,24 @@ section > button {
       3px 35%,
       3px 90%;
   }
+}
+
+/* Speaking: the prospect's voice is playing. Same level mark as listening, in the ink. */
+[data-speaking="true"] .status {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+[data-speaking="true"] .status::before {
+  flex: none;
+  width: 1.4rem;
+  height: 1rem;
+  background:
+    linear-gradient(var(--ink), var(--ink)) 0 50% / 3px 60% no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 50% 50% / 3px 100% no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 100% 50% / 3px 40% no-repeat;
+  content: "";
+  animation: level 0.9s ease-in-out infinite alternate;
 }
 
 /* Pinned to the bottom of the screen, so the main button is always under the thumb. */

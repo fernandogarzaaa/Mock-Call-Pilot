@@ -10,7 +10,15 @@ import { R2Storage } from "../storage/r2.ts";
 import { FakeTranscriber } from "../stt/fake.ts";
 import { GroqTranscriber } from "../stt/groq.ts";
 import { ScribeTranscriber } from "../stt/scribe.ts";
-import type { LinePicker, ResolvedConfig, Storage, Transcriber } from "../types/index.ts";
+import { FakeSynthesizer } from "../tts/fake.ts";
+import { GroqSynthesizer } from "../tts/groq.ts";
+import type {
+  LinePicker,
+  ResolvedConfig,
+  Storage,
+  Synthesizer,
+  Transcriber,
+} from "../types/index.ts";
 import { ConfigError } from "../types/index.ts";
 import { buildApp } from "./app.ts";
 
@@ -58,6 +66,18 @@ function buildTranscriber(env: Env): Transcriber {
   );
 }
 
+function buildSynthesizer(env: Env): Synthesizer {
+  if (env.TTS === "groq") {
+    return new GroqSynthesizer(
+      requireEnv(env, "GROQ_API_KEY"),
+      env.GROQ_TTS_MODEL || "canopylabs/orpheus-v1-english",
+      env.GROQ_TTS_VOICE || "austin",
+      env.GROQ_TTS_VOICE_FEMALE || "autumn",
+    );
+  }
+  return new FakeSynthesizer();
+}
+
 async function buildPicker(env: Env, config: ResolvedConfig): Promise<LinePicker> {
   if (env.PICKER === "fake") return new FakePicker(config.script);
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -77,6 +97,7 @@ async function main(): Promise<void> {
     config,
     storage: await buildStorage(env),
     transcriber: buildTranscriber(env),
+    synthesizer: buildSynthesizer(env),
     picker: await buildPicker(env, config),
   });
   // Bind IPv4 explicitly: with the default dual-stack "::" bind, a port 0 the kernel picks can

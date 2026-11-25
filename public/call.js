@@ -61,6 +61,10 @@ const state = {
   confirmTicked: false,
   // Bumped by Redo and by the end of a practice call, so late answers to an old call are dropped.
   callGen: 0,
+  // The prospect's voice: the Audio element now playing, if any.
+  voice: null,
+  // Which prospect voice the candidate chose on the Ready screen. Male is the default.
+  voiceChoice: "male",
   // Sound check: the level meter runs from the moment the microphone is granted.
   audioCtx: null,
   analyser: null,
@@ -74,6 +78,9 @@ const state = {
   turnPeak: Number.NEGATIVE_INFINITY,
 };
 let ui = {};
+
+// Bumped per prospect line, so a slow voice answer to an old line never plays over a newer one.
+let speechSeq = 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -272,6 +279,35 @@ const views = {
           : "Typed test: type each turn and press Send. Nothing is recorded.",
       ),
       h("p", {}, `Time limit: ${limitLabel()}.`),
+      h(
+        "div",
+        { className: "voice-choice" },
+        h("p", {}, "Prospect voice: pick the one you are most comfortable with."),
+        h(
+          "button",
+          {
+            type: "button",
+            className: state.voiceChoice === "male" ? "voice selected" : "voice",
+            onclick: () => {
+              state.voiceChoice = "male";
+              render();
+            },
+          },
+          "Male",
+        ),
+        h(
+          "button",
+          {
+            type: "button",
+            className: state.voiceChoice === "female" ? "voice selected" : "voice",
+            onclick: () => {
+              state.voiceChoice = "female";
+              render();
+            },
+          },
+          "Female",
+        ),
+      ),
     ];
     if (state.practiceNote) {
       children.push(h("p", { className: "note", role: "status" }, state.practiceNote));
@@ -732,6 +768,7 @@ async function startCall() {
 function resetCall() {
   state.callGen++;
   clearInterval(state.timer);
+  stopVoice();
   state.turn?.stop();
   state.turn = null;
   state.pending = null;
@@ -805,6 +842,65 @@ function tick() {
 function setStatus(text) {
   state.status = text;
   if (ui.status) ui.status.textContent = text;
+}
+
+// The prospect's voice. Fire and forget: the line is already on screen, so a slow or failed
+// voice answer just means the candidate reads it. Never an error, never a block.
+async function speakLine(text) {
+  if (!text) return;
+  const gen = state.callGen;
+  const seq = ++speechSeq;
+  stopVoice();
+  let response = null;
+  try {
+    const form = new FormData();
+    form.append("code", code);
+    form.append("text", text);
+    form.append("voice", state.voiceChoice);
+    response = await fetch("/api/speech", { method: "POST", body: form });
+  } catch {
+    // No voice: the text is already on screen.
+    return;
+  }
+  if (gen !== state.callGen || seq !== speechSeq || !response?.ok) return;
+  let blob = null;
+  try {
+    blob = await response.blob();
+  } catch {
+    return;
+  }
+  if (gen !== state.callGen || seq !== speechSeq || !blob || blob.size === 0) return;
+  const audio = new Audio(URL.createObjectURL(blob));
+  state.voice = audio;
+  setSpeaking(true);
+  const done = () => {
+    if (state.voice === audio) {
+      state.voice = null;
+      setSpeaking(false);
+    }
+  };
+  audio.addEventListener("ended", done);
+  audio.addEventListener("error", done);
+  try {
+    await audio.play();
+  } catch {
+    done();
+  }
+}
+
+function stopVoice() {
+  if (state.voice) {
+    state.voice.pause();
+    state.voice = null;
+  }
+  setSpeaking(false);
+}
+
+function setSpeaking(on) {
+  if (ui.section) ui.section.dataset.speaking = on ? "true" : "false";
+  if (!ui.status) return;
+  if (on) ui.status.textContent = "Prospect is speaking…";
+  else if (ui.status.textContent === "Prospect is speaking…") ui.status.textContent = "";
 }
 
 function updateControls() {
@@ -921,6 +1017,7 @@ async function submitPractice() {
     state.lines.push(body.text);
     addLine(body.text);
   }
+  speakLine(body.text);
   setStatus(turn.quiet ? QUIET_TURN : "");
   if (body.ended) finishPractice(body.endReason, body.text === "" ? 0 : LAST_LINE_MS);
 }
@@ -950,6 +1047,7 @@ async function submitPending() {
     state.turnIndex = turn.index + 1;
     state.lines.push(body.text);
     addLine(body.text);
+    speakLine(body.text);
     setStatus(turn.quiet ? QUIET_TURN : "");
     if (body.ended) beginFinish("candidate_ended", LAST_LINE_MS);
     return;

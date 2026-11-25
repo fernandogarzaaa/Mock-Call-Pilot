@@ -21,6 +21,9 @@ services:
         value: groq
       - key: GROQ_API_KEY
         sync: false
+      # Free Orpheus text-to-speech on Groq (decision D9). Same key as STT.
+      - key: TTS
+        value: groq
       - key: PICKER
         value: fake
       # Render's free disk is wiped on every restart and sleep, so recordings live in R2.

@@ -114,7 +114,8 @@ describe("loadConfig in live mode", () => {
 
   it("names an unapproved line, objection and fallback line", () => {
     const dir = makeDir((script) => {
-      script.lines[4].approved = false;
+      const listen = script.lines.find((line) => line.id === "d2.listen");
+      if (listen) listen.approved = false;
       script.objections[1].approved = false;
       script.fallbackLine.approved = false;
     });
@@ -152,6 +153,21 @@ describe("loadConfig in live mode", () => {
     expect(names(empty, "env.GROQ_API_KEY")).toBe(true);
   });
 
+  it("with TTS=groq asks for the Groq key even when STT uses ElevenLabs", () => {
+    const groq = { ...LIVE_ENV, TTS: "groq", GROQ_API_KEY: undefined };
+    const missing = problemsOf(() => loadConfig(makeDir(), groq));
+    expect(missing).toHaveLength(1);
+    expect(names(missing, "env.GROQ_API_KEY")).toBe(true);
+    expect(() => loadConfig(makeDir(), { ...groq, GROQ_API_KEY: "g-key" })).not.toThrow();
+  });
+
+  it("names the Groq key once when both STT and TTS use Groq", () => {
+    const groq = { ...LIVE_ENV, STT: "groq", TTS: "groq", GROQ_API_KEY: undefined };
+    const missing = problemsOf(() => loadConfig(makeDir(), groq));
+    expect(missing).toHaveLength(1);
+    expect(names(missing, "env.GROQ_API_KEY")).toBe(true);
+  });
+
   it("names a missing API key for each real adapter", () => {
     const stt = problemsOf(() =>
       loadConfig(makeDir(), { ...LIVE_ENV, ELEVENLABS_API_KEY: undefined }),
@@ -186,7 +202,8 @@ describe("loadConfig in live mode", () => {
     const dir = makeDir((script, pilot) => {
       pilot.gaps.retentionDays = null;
       script.persona.firstName = null;
-      script.lines[4].approved = false;
+      const listen = script.lines.find((line) => line.id === "d2.listen");
+      if (listen) listen.approved = false;
     });
     let error: unknown;
     try {
@@ -211,12 +228,25 @@ describe("loadConfig in live mode", () => {
   it("fails the real config folder, naming every open gap (CUJ 5)", () => {
     const problems = problemsOf(() => loadConfig(REAL_DIR, LIVE_ENV));
     for (const key of GAP_KEYS) expect(names(problems, `gaps.${key}`)).toBe(true);
+    // The script is integrated: the persona is set and every line and the fallback are
+    // approved, so no line, persona or fallback problem is named. The only script-side
+    // blockers left are the objections, whose caller replies are still pending.
     for (const key of ["firstName", "companyName", "fleetSize"]) {
-      expect(names(problems, `persona.${key}`)).toBe(true);
+      expect(names(problems, `persona.${key}`)).toBe(false);
     }
-    expect(names(problems, "lines.d2.next.approved")).toBe(true);
-    expect(names(problems, "fallbackLine.approved")).toBe(true);
-    expect(names(problems, "objections.obj.busy.approved")).toBe(true);
+    expect(problems.some((problem) => problem.startsWith("lines."))).toBe(false);
+    expect(names(problems, "fallbackLine.approved")).toBe(false);
+    for (const id of [
+      "obj.busy",
+      "obj.notinterested",
+      "obj.havetelematics",
+      "obj.sendinfo",
+      "obj.nobudget",
+      "obj.callback",
+      "obj.thinkaboutit",
+    ]) {
+      expect(names(problems, `objections.${id}.approved`)).toBe(true);
+    }
   });
 });
 

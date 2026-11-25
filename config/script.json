@@ -1,8 +1,8 @@
 {
   "persona": {
-    "firstName": null,
-    "companyName": null,
-    "fleetSize": null
+    "firstName": "John",
+    "companyName": "Lone Mesa Site Services",
+    "fleetSize": 24
   },
   "stages": ["d1_attention", "d2_lawsuit", "fleet_check", "d3_pitch", "d4_schedule"],
   "lines": [
@@ -35,70 +35,135 @@
       "approved": true
     },
     {
+      "id": "d1.hello",
+      "stage": "d1_attention",
+      "text": "Hello?",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.whos",
+      "stage": "d1_attention",
+      "text": "Yeah... who's this?",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.speaking",
+      "stage": "d1_attention",
+      "text": "Yeah, speaking. Who's calling?",
+      "nextStage": "d1_attention",
+      "approved": true
+    },
+    {
+      "id": "d1.goahead",
+      "stage": "d1_attention",
+      "text": "Alright, go ahead.",
+      "nextStage": "d2_lawsuit",
+      "approved": true
+    },
+    {
       "id": "d2.listen",
       "stage": "d2_lawsuit",
-      "text": "PLACEHOLDER d2.listen: not client-approved",
+      "text": "Sounds like a sales pitch to me.",
       "nextStage": "d2_lawsuit",
-      "approved": false
+      "approved": true
     },
     {
       "id": "d2.next",
       "stage": "d2_lawsuit",
-      "text": "PLACEHOLDER d2.next: not client-approved",
+      "text": "Okay.",
       "nextStage": "fleet_check",
-      "approved": false
+      "approved": true
     },
     {
       "id": "fc.count",
       "stage": "fleet_check",
-      "text": "PLACEHOLDER fc.count: not client-approved",
+      "text": "Twenty-four trucks right now. Adding five more after the new year.",
       "nextStage": "d3_pitch",
-      "approved": false
+      "approved": true
     },
     {
       "id": "d3.consider",
       "stage": "d3_pitch",
-      "text": "PLACEHOLDER d3.consider: not client-approved",
+      "text": "Yeah, send it over,",
       "nextStage": "d3_pitch",
-      "approved": false
+      "approved": true,
+      "endsCall": "prospect_ended"
     },
     {
       "id": "d3.agree",
       "stage": "d3_pitch",
-      "text": "PLACEHOLDER d3.agree: not client-approved",
+      "text": "Alright. Twenty minutes, I can do that.",
       "nextStage": "d4_schedule",
-      "approved": false
+      "approved": true
     },
     {
       "id": "d3.hangup",
       "stage": "d3_pitch",
-      "text": "PLACEHOLDER d3.hangup: not client-approved",
+      "text": "Tell you what, I'm gonna pass. Thanks.",
       "nextStage": "d3_pitch",
-      "approved": false,
+      "approved": true,
       "endsCall": "prospect_ended"
     },
     {
       "id": "d4.time",
       "stage": "d4_schedule",
-      "text": "PLACEHOLDER d4.time: not client-approved",
+      "text": "I don't know, what do you have?",
       "nextStage": "d4_schedule",
-      "approved": false
+      "approved": true
     },
     {
       "id": "d4.seeinvite",
       "stage": "d4_schedule",
-      "text": "PLACEHOLDER d4.seeinvite: not client-approved",
+      "text": "Hang on... yep, got it. Accepted.",
       "nextStage": "d4_schedule",
-      "approved": false,
+      "approved": true,
       "endsCall": "booked"
+    },
+    {
+      "id": "d4.other",
+      "stage": "d4_schedule",
+      "text": "That one doesn't work. What else you got?",
+      "nextStage": "d4_schedule",
+      "approved": true
+    },
+    {
+      "id": "d4.thursday",
+      "stage": "d4_schedule",
+      "text": "Alright, talk to you Thursday.",
+      "nextStage": "d4_schedule",
+      "approved": true,
+      "endsCall": "booked"
+    },
+    {
+      "id": "d4.alright",
+      "stage": "d4_schedule",
+      "text": "Alright",
+      "nextStage": "d4_schedule",
+      "approved": true
+    },
+    {
+      "id": "d4.about",
+      "stage": "d4_schedule",
+      "text": "And remind me what this meeting is about?",
+      "nextStage": "d4_schedule",
+      "approved": true
+    },
+    {
+      "id": "d4.email",
+      "stage": "d4_schedule",
+      "text": "john@lonemesasite.com",
+      "nextStage": "d4_schedule",
+      "approved": true
     }
   ],
   "objections": [
     {
       "id": "obj.busy",
-      "prospectLine": "PLACEHOLDER obj.busy: not client-approved",
+      "prospectLine": "I'm kind of in the middle of something here. What's this about?",
       "callerReply": "PLACEHOLDER obj.busy.reply: not client-approved",
-      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "allowedStages": ["d1_attention"],
       "approved": false
     },
     {
@@ -110,16 +175,16 @@
     },
     {
       "id": "obj.havetelematics",
-      "prospectLine": "PLACEHOLDER obj.havetelematics: not client-approved",
+      "prospectLine": "We've already got GPS on our trucks.",
       "callerReply": "PLACEHOLDER obj.havetelematics.reply: not client-approved",
-      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "allowedStages": ["d2_lawsuit"],
       "approved": false
     },
     {
       "id": "obj.sendinfo",
-      "prospectLine": "PLACEHOLDER obj.sendinfo: not client-approved",
+      "prospectLine": "Can you just send me some information? I'll take a look.",
       "callerReply": "PLACEHOLDER obj.sendinfo.reply: not client-approved",
-      "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
+      "allowedStages": ["d3_pitch"],
       "approved": false
     },
     {
@@ -135,10 +200,17 @@
       "callerReply": "PLACEHOLDER obj.callback.reply: not client-approved",
       "allowedStages": ["d2_lawsuit", "d3_pitch", "d4_schedule"],
       "approved": false
+    },
+    {
+      "id": "obj.thinkaboutit",
+      "prospectLine": "I don't know. Let me think about it.",
+      "callerReply": "PLACEHOLDER obj.thinkaboutit.reply: not client-approved",
+      "allowedStages": ["d3_pitch"],
+      "approved": false
     }
   ],
   "fallbackLine": {
-    "text": "PLACEHOLDER fallback: not client-approved",
-    "approved": false
+    "text": "Hello? You still there?",
+    "approved": true
   }
 }

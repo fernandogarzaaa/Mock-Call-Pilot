@@ -6,6 +6,7 @@ import { FakePicker } from "../picker/fake.ts";
 import { FIXTURE_START, fixtureScript } from "../script/fixture.ts";
 import { FsStorage } from "../storage/fs.ts";
 import { FakeTranscriber } from "../stt/fake.ts";
+import { FakeSynthesizer } from "../tts/fake.ts";
 import type {
   LinePicker,
   PickInput,
@@ -13,10 +14,16 @@ import type {
   ScriptConfig,
   SessionState,
   Storage,
+  Synthesizer,
   Transcriber,
   Transcript,
 } from "../types/index.ts";
-import { PickerError, PreconditionFailed, TranscribeError } from "../types/index.ts";
+import {
+  PickerError,
+  PreconditionFailed,
+  SynthesizeError,
+  TranscribeError,
+} from "../types/index.ts";
 import { buildApp } from "./app.ts";
 import { DEMO_BANNER } from "./views.ts";
 
@@ -65,6 +72,7 @@ interface Options {
   script?: ScriptConfig;
   picker?: LinePicker;
   transcriber?: Transcriber;
+  synthesizer?: Synthesizer;
   config?: Partial<ResolvedConfig>;
   wrapStorage?: (fs: FsStorage) => Storage;
 }
@@ -91,6 +99,7 @@ async function harness(options: Options = {}) {
     config,
     storage,
     transcriber: options.transcriber ?? new FakeTranscriber(),
+    synthesizer: options.synthesizer ?? new FakeSynthesizer(),
     picker: options.picker ?? new FakePicker(script),
     now: () => new Date(clock.ms),
   });
@@ -1250,5 +1259,104 @@ describe("practice calls", () => {
       mime: "audio/webm",
     });
     expect((await getTranscript(h, id)).turns.map((turn) => turn.candidateText)).toEqual(WALK);
+  });
+});
+
+describe("speech", () => {
+  function speechForm(text: string, code: unknown = CODE, voice?: string): FormData {
+    const form = new FormData();
+    form.append("code", String(code));
+    form.append("text", text);
+    if (voice !== undefined) form.append("voice", voice);
+    return form;
+  }
+
+  function postSpeech(
+    h: Harness,
+    text: string,
+    code: unknown = CODE,
+    voice?: string,
+  ): Response | Promise<Response> {
+    return h.app.request("/api/speech", { method: "POST", body: speechForm(text, code, voice) });
+  }
+
+  it("returns WAV audio for a line in the script", async () => {
+    const h = await harness();
+    const res = await postSpeech(h, "FIXTURE d1.okay");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("audio/wav");
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(bytes.byteLength).toBeGreaterThan(44);
+    expect(String.fromCharCode(...bytes.slice(0, 4))).toBe("RIFF");
+  });
+
+  it("also speaks an objection line and the fallback line", async () => {
+    const h = await harness();
+    for (const text of ["FIXTURE obj.busy", "FIXTURE fallback"]) {
+      const res = await postSpeech(h, text);
+      expect(res.status, text).toBe(200);
+      expect(res.headers.get("content-type")).toBe("audio/wav");
+    }
+  });
+
+  it("accepts the female voice and defaults to male when no voice is sent", async () => {
+    const h = await harness();
+    for (const voice of ["female", "male", undefined]) {
+      const res = await postSpeech(h, "FIXTURE d1.okay", CODE, voice);
+      expect(res.status, String(voice)).toBe(200);
+      expect(res.headers.get("content-type")).toBe("audio/wav");
+    }
+  });
+
+  it("answers 422 for a voice that is not male or female", async () => {
+    const h = await harness();
+    for (const voice of ["banana", "MALE", ""]) {
+      const res = await postSpeech(h, "FIXTURE d1.okay", CODE, voice);
+      expect(res.status, JSON.stringify(voice)).toBe(422);
+      expect(await res.json()).toEqual({ error: "bad_voice" });
+    }
+  });
+
+  it("answers 403 to a wrong or missing access code", async () => {
+    const h = await harness();
+    expect((await postSpeech(h, "FIXTURE d1.okay", "nope")).status).toBe(403);
+    expect((await postSpeech(h, "FIXTURE d1.okay", "")).status).toBe(403);
+  });
+
+  it("answers 422 for text that is not a script line", async () => {
+    const h = await harness();
+    for (const text of ["", "Hello there", "FIXTURE obj.busy reply", "d1.okay"]) {
+      const res = await postSpeech(h, text);
+      expect(res.status, JSON.stringify(text)).toBe(422);
+      expect(await res.json()).toEqual({ error: "bad_text" });
+    }
+  });
+
+  it("answers 502 and logs the failure when synthesis fails, without leaking the key", async () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const failing: Synthesizer = {
+      async synthesize() {
+        throw new SynthesizeError("tts_error", "Groq answered 429: slow down");
+      },
+    };
+    const h = await harness({ synthesizer: failing });
+    const res = await postSpeech(h, "FIXTURE d1.okay");
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "tts_failed" });
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0]?.[0]).toContain('"event":"tts_failed"');
+    expect(spy.mock.calls[0]?.[0]).toContain("Groq answered 429");
+    spy.mockRestore();
+  });
+
+  it("rejects a speech body over 4 KB with 413", async () => {
+    const h = await harness();
+    const res = await h.app.request("/api/speech", {
+      method: "POST",
+      body: speechForm("FIXTURE d1.okay"),
+      headers: { "content-length": String(4 * 1024 + 1) },
+    });
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: "too_large" });
   });
 });
