@@ -64,7 +64,7 @@ Names only. Values go in the Render dashboard, never in the repo.
 | `STT`                   | set in render.yaml              | `fake`, `groq` (free) or `scribe`; `fake` is refused in live mode                                   |
 | `TTS`                   | set in render.yaml              | `fake` or `groq` (free); `fake` is the default and answers silence, so the page stays text only     |
 | `GROQ_TTS_MODEL`        | when `TTS=groq`                 | Orpheus model, default `canopylabs/orpheus-v1-english`                                              |
-| `GROQ_TTS_VOICE`        | when `TTS=groq`                 | Orpheus male voice, default `daniel`                                                                |
+| `GROQ_TTS_VOICE`        | when `TTS=groq`                 | Orpheus male voice, default `troy`                                                                |
 | `GROQ_TTS_VOICE_FEMALE` | when `TTS=groq`                 | Orpheus female voice, default `autumn` (chosen by Inan 2026-11-26)                                  |
 | `PICKER`                | set in render.yaml              | `fake` in demo; delete it for live                                                                  |
 
