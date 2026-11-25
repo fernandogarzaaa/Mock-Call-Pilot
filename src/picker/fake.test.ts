@@ -24,6 +24,10 @@ function inputFor(
         .filter((o) => o.allowedStages.includes(stage) && !used.includes(o.id))
         .map((o) => ({ id: o.id, text: o.prospectLine })),
     ],
+    allowedNextStages: [
+      stage,
+      ...new Set(script.lines.filter((l) => l.stage === stage).map((l) => l.nextStage)),
+    ],
   };
 }
 
@@ -185,6 +189,7 @@ describe("FakePicker", () => {
       recentTurns: [] as CallTurn[],
       candidateText: "hi",
       allowed: [{ id: "obj.busy", text: "busy" }, ...inputFor(seed, "d2_lawsuit").allowed],
+      allowedNextStages: ["d2_lawsuit", "d3_pitch"],
     };
     expect(await new FakePicker(seed).pick(input)).toEqual({ lineId: "d2.next" });
   });
@@ -198,6 +203,7 @@ describe("FakePicker", () => {
         { id: "d3.consider", text: "x" },
         { id: "d3.hangup", text: "x" },
       ],
+      allowedNextStages: ["d3_pitch", "d4_schedule"],
     };
     await expect(new FakePicker(seed).pick(input)).rejects.toMatchObject({ kind: "picker_error" });
   });
@@ -208,6 +214,7 @@ describe("FakePicker", () => {
       recentTurns: [],
       candidateText: "hi",
       allowed: [{ id: "d4.time", text: "x" }],
+      allowedNextStages: ["d4_schedule"],
     };
     await expect(new FakePicker(seed).pick(input)).rejects.toMatchObject({ kind: "picker_error" });
   });

@@ -16,6 +16,7 @@ const input: PickInput = {
     { id: "d2.listen", text: "Go on." },
     { id: "obj.busy", text: "I'm busy." },
   ],
+  allowedNextStages: ["d2_lawsuit", "d3_pitch"],
 };
 
 function stub(respond: (params: Record<string, unknown>) => Promise<Response>) {

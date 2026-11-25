@@ -63,6 +63,7 @@ async function startApp(fakes: Fakes = {}): Promise<string> {
     transcriber: fakes.transcriber ?? new FakeTranscriber(),
     synthesizer: fakes.synthesizer ?? new FakeSynthesizer(),
     picker: fakes.picker ?? new FakePicker(script),
+    speechSecret: "test-speech-secret",
   });
   return await new Promise((resolve) => {
     const server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, (info) => {

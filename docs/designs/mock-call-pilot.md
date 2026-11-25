@@ -258,6 +258,34 @@ tests only those two risks, before anyone invests in voice AI, scoring or bookin
     *   Open risk: one third-party source says an org admin must accept the Orpheus model terms
         in the Groq console once before the API works; another says no such step. If the first
         real TTS call fails, Inan may need to accept the terms in the console.
+*   **D10, the generative prospect: John answers in his own words (2026-11-26, Inan).** Testing
+    the scripted pilot, Inan found it still felt like a quiz, not a call: the prospect could
+    only pick from 21 pre-written lines, so an unexpected candidate line got a generic
+    "Okay." instead of a real answer. He told Cookie to build the right thing without waiting
+    for Rhieza's approval, and clarified with her separately. The generative prospect uses
+    Claude to write John's reply in the moment, staying in character (direct, Texas, 24
+    trucks, Lone Mesa Site Services) and steering toward booking Thursday December 3 at 10 AM
+    Central or Friday December 4 at 2 PM Central. The script becomes guardrails, not a list
+    of lines: the stage beats, the trucks-only-if-asked rule, the email, and the never-say
+    list (deadbolt, script) all live in the generator prompt.
+    *   `PROSPECT=generative` selects the generator; anything else keeps the scripted picker.
+        The generator reuses the picker's Claude client, model, and effort. It needs
+        `ANTHROPIC_API_KEY`, which is not set on Render yet; until it is, the live site stays
+        scripted.
+    *   The generator returns JSON `{ text, nextStage, endReason }`. `nextStage` is restricted
+        to the stages the current stage can move to, and is validated again in `turnStep`;
+        an invalid stage or end reason falls back to the fallback line. `endReason` is only
+        `booked` or `prospect_ended`. Generated text is capped at 200 characters so it fits
+        one TTS request.
+    *   The voice only speaks generated text with a token: the turn response carries a
+        `speechToken` (a hash of the server secret and the text), and `/api/speech` accepts a
+        generated line only with a matching token. Script lines still speak without a token.
+        This keeps the G1 rule (the voice cannot be made to say arbitrary text) while letting
+        the prospect speak its own words.
+    *   Tradeoff, stated to Inan before building: generative is less predictable than scripted.
+        Harold scores against a fixed script, so a generative John makes scoring less
+        standardized, and he can occasionally say something off-script. The scripted picker
+        stays available by unsetting `PROSPECT=generative`.
     *   The script is now integrated from Rhieza's prospect script doc (the 9-stage John Smith
         script, Lone Mesa Site Services). Judgment calls: `d2.listen` keeps its id even though
         the text is now "Sounds like a sales pitch to me."; `d3.consider` ("Yeah, send it

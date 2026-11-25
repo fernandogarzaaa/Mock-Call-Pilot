@@ -26,6 +26,13 @@ services:
         value: groq
       - key: PICKER
         value: fake
+      # Generative prospect (decision D10): set PROSPECT=generative and add ANTHROPIC_API_KEY
+      # in the dashboard to make John answer in his own words instead of picking a script
+      # line. Default is unset, which keeps the scripted picker.
+      - key: PROSPECT
+        value: scripted
+      - key: ANTHROPIC_API_KEY
+        sync: false
       # Render's free disk is wiped on every restart and sleep, so recordings live in R2.
       - key: STORAGE
         value: r2

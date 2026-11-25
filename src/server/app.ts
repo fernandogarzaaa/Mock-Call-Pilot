@@ -16,6 +16,7 @@ export interface BuildAppOptions {
   transcriber: Transcriber;
   synthesizer: Synthesizer;
   picker: LinePicker;
+  speechSecret: string;
   now?: () => Date;
 }
 

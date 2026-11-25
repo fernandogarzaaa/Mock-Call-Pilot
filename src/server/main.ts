@@ -79,6 +79,18 @@ function buildSynthesizer(env: Env): Synthesizer {
 }
 
 async function buildPicker(env: Env, config: ResolvedConfig): Promise<LinePicker> {
+  if (env.PROSPECT === "generative") {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const { ClaudeGenerator } = await import("../prospect/claude.ts");
+    const { generatorSystemPrompt } = await import("../prospect/prompt.ts");
+    const client = new Anthropic({ apiKey: requireEnv(env, "ANTHROPIC_API_KEY") });
+    return new ClaudeGenerator(
+      client,
+      env.PICKER_MODEL || "claude-opus-5-5",
+      env.PICKER_EFFORT || "low",
+      generatorSystemPrompt(config.script),
+    );
+  }
   if (env.PICKER === "fake") return new FakePicker(config.script);
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey: requireEnv(env, "ANTHROPIC_API_KEY") });
@@ -93,12 +105,14 @@ async function buildPicker(env: Env, config: ResolvedConfig): Promise<LinePicker
 async function main(): Promise<void> {
   const env: Env = process.env;
   const config = loadConfig("./config", env);
+  const speechSecret = env.SPEECH_SECRET || randomBytes(32).toString("hex");
   const app = buildApp({
     config,
     storage: await buildStorage(env),
     transcriber: buildTranscriber(env),
     synthesizer: buildSynthesizer(env),
     picker: await buildPicker(env, config),
+    speechSecret,
   });
   // Bind IPv4 explicitly: with the default dual-stack "::" bind, a port 0 the kernel picks can
   // already be held on 127.0.0.1 by another process, and IPv4 clients then reach that process.

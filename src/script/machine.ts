@@ -4,6 +4,7 @@ import type {
   LinePicker,
   ScriptConfig,
   SessionState,
+  Stage,
   TurnBase,
   TurnInput,
 } from "../types/index.ts";
@@ -65,6 +66,29 @@ export function applyLine(
   };
 }
 
+export function allowedNextStages(script: ScriptConfig, stage: Stage): Stage[] {
+  const stages = new Set<Stage>([stage]);
+  for (const line of script.lines) {
+    if (line.stage === stage) stages.add(line.nextStage);
+  }
+  return [...stages];
+}
+
+export function applyGenerated(
+  state: SessionState,
+  generated: { text: string; nextStage: Stage; endReason?: "booked" | "prospect_ended" },
+  turnBase: TurnBase,
+): SessionState {
+  const turn: CallTurn = { ...turnBase, prospect: { lineId: null, text: generated.text } };
+  const next: SessionState = { ...state, turns: [...state.turns, turn] };
+  if (generated.endReason !== undefined) {
+    next.endReason = generated.endReason;
+  } else {
+    next.stage = generated.nextStage;
+  }
+  return next;
+}
+
 export function applyFallback(
   script: ScriptConfig,
   state: SessionState,
@@ -123,22 +147,57 @@ export async function turnStep(
       "",
   }));
 
-  let pickedId: unknown;
+  let picked: unknown;
   try {
-    const picked = await picker.pick({
+    picked = await picker.pick({
       stage: state.stage,
       recentTurns: state.turns.slice(-RECENT_TURN_LIMIT),
       candidateText: input.text,
       allowed,
+      allowedNextStages: allowedNextStages(script, state.stage),
     });
-    pickedId = picked?.lineId;
   } catch (error) {
     const cause = error instanceof PickerError ? error.kind : "picker_error";
     return finish(applyFallback(script, state, cause, base(input.text)));
   }
 
-  if (typeof pickedId === "string" && allowedIds.includes(pickedId)) {
-    return finish(applyLine(script, state, pickedId, base(input.text)));
+  if (typeof picked === "object" && picked !== null && "lineId" in picked) {
+    const pickedId = (picked as { lineId: unknown }).lineId;
+    if (typeof pickedId === "string" && allowedIds.includes(pickedId)) {
+      return finish(applyLine(script, state, pickedId, base(input.text)));
+    }
+    return finish(applyFallback(script, state, "picker_invalid_id", base(input.text)));
+  }
+  if (typeof picked === "object" && picked !== null && "text" in picked) {
+    const generated = picked as { text: unknown; nextStage: unknown; endReason?: unknown };
+    const text = generated.text;
+    const nextStage = generated.nextStage;
+    const endReason = generated.endReason;
+    const validStages = allowedNextStages(script, state.stage);
+    const validEnd =
+      endReason === undefined || endReason === "booked" || endReason === "prospect_ended";
+    if (
+      typeof text === "string" &&
+      text.trim() !== "" &&
+      text.length <= 200 &&
+      typeof nextStage === "string" &&
+      (validStages as string[]).includes(nextStage) &&
+      validEnd
+    ) {
+      return finish(
+        applyGenerated(
+          state,
+          {
+            text: text.trim(),
+            nextStage: nextStage as Stage,
+            endReason:
+              endReason === "booked" || endReason === "prospect_ended" ? endReason : undefined,
+          },
+          base(input.text),
+        ),
+      );
+    }
+    return finish(applyFallback(script, state, "picker_invalid_id", base(input.text)));
   }
   return finish(applyFallback(script, state, "picker_invalid_id", base(input.text)));
 }

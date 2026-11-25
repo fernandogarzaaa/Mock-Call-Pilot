@@ -15,7 +15,13 @@ import type {
   TurnInput,
 } from "../types/index.ts";
 import { PreconditionFailed, SynthesizeError, TranscribeError } from "../types/index.ts";
-import { asSession, freshPractice, openingTurn, parsePracticeState, toPractice } from "./practice.ts";
+import {
+  asSession,
+  freshPractice,
+  openingTurn,
+  parsePracticeState,
+  toPractice,
+} from "./practice.ts";
 import { callShell, messagePage, recordingPage } from "./views.ts";
 
 export interface AppDeps {
@@ -24,6 +30,7 @@ export interface AppDeps {
   transcriber: Transcriber;
   synthesizer: Synthesizer;
   picker: LinePicker;
+  speechSecret: string;
   now: () => Date;
 }
 
@@ -37,6 +44,8 @@ interface TurnResult {
   text: string;
   ended: boolean;
   endReason?: EndReason;
+  /** Authorizes /api/speech to speak this text when it is generated, not a script line. */
+  speechToken?: string;
 }
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
@@ -155,8 +164,21 @@ function isScriptText(config: ResolvedConfig, text: string): boolean {
   return config.script.objections.some((objection) => objection.prospectLine === text);
 }
 
+/** Short token authorizing /api/speech to speak a generated line. The page gets it from
+ *  the turn response; a caller cannot mint one without the server secret. */
+function speechToken(secret: string, text: string): string {
+  return createHash("sha256").update(`${secret}:${text}`).digest("hex").slice(0, 16);
+}
+
+function speechTokenMatches(secret: string, text: string, token: unknown): boolean {
+  if (typeof token !== "string" || token === "") return false;
+  const expected = speechToken(secret, text);
+  if (token.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
 export function registerRoutes(app: Hono, deps: AppDeps): void {
-  const { config, storage, transcriber, synthesizer, picker, now } = deps;
+  const { config, storage, transcriber, synthesizer, picker, speechSecret, now } = deps;
   const demo = config.mode === "demo";
   const tooLarge = (c: Context) => c.json({ error: "too_large" }, 413);
   const turnLimit = bodyLimit({ maxSize: TURN_BODY_LIMIT, onError: tooLarge });
@@ -266,6 +288,9 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
       state: toPractice(step.state),
     };
     if (step.ended) result.endReason = step.state.endReason;
+    if (step.displayText !== "" && !isScriptText(config, step.displayText)) {
+      result.speechToken = speechToken(speechSecret, step.displayText);
+    }
     return c.json(result);
   });
 
@@ -276,7 +301,9 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     const form = await readForm(c);
     if (!codeMatches(config.accessCode, form.code)) return c.json({ error: "bad_code" }, 403);
     const text = typeof form.text === "string" ? form.text : "";
-    if (!isScriptText(config, text)) return c.json({ error: "bad_text" }, 422);
+    const tokenOk =
+      isScriptText(config, text) || speechTokenMatches(speechSecret, text, form.token);
+    if (!tokenOk) return c.json({ error: "bad_text" }, 422);
     const voice = form.voice === undefined ? "male" : form.voice;
     if (voice !== "male" && voice !== "female") return c.json({ error: "bad_voice" }, 422);
     try {
@@ -345,6 +372,9 @@ export function registerRoutes(app: Hono, deps: AppDeps): void {
     }
     const result: TurnResult = { text: step.displayText, ended: step.ended };
     if (step.ended) result.endReason = step.state.endReason;
+    if (step.displayText !== "" && !isScriptText(config, step.displayText)) {
+      result.speechToken = speechToken(speechSecret, step.displayText);
+    }
     return c.json(result);
   });
 

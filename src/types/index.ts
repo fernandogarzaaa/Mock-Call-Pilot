@@ -137,9 +137,15 @@ export interface PickInput {
   /** What the candidate just said (non-empty). */
   candidateText: string;
   allowed: { id: string; text: string }[];
+  /** Stages the prospect may move to next, including the current stage (stay). */
+  allowedNextStages: Stage[];
 }
+/** What a picker returns: a script line id, or a generated reply with its next stage. */
+export type PickResult =
+  | { lineId: string }
+  | { text: string; nextStage: Stage; endReason?: "booked" | "prospect_ended" };
 export interface LinePicker {
-  pick(input: PickInput): Promise<{ lineId: string }>;
+  pick(input: PickInput): Promise<PickResult>;
 }
 
 export class PreconditionFailed extends Error {}

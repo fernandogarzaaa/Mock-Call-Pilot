@@ -860,7 +860,7 @@ function setStatus(text) {
 
 // The prospect's voice. Fire and forget: the line is already on screen, so a slow or failed
 // voice answer just means the candidate reads it. Never an error, never a block.
-async function speakLine(text) {
+async function speakLine(text, token) {
   if (!text) return;
   const gen = state.callGen;
   const seq = ++speechSeq;
@@ -870,6 +870,7 @@ async function speakLine(text) {
     const form = new FormData();
     form.append("code", code);
     form.append("text", text);
+    if (token) form.append("token", token);
     form.append("voice", state.voiceChoice);
     response = await fetch("/api/speech", { method: "POST", body: form });
   } catch {
@@ -1031,7 +1032,7 @@ async function submitPractice() {
     state.lines.push(body.text);
     addLine(body.text);
   }
-  speakLine(body.text);
+  speakLine(body.text, body.speechToken);
   setStatus(turn.quiet ? QUIET_TURN : "");
   if (body.ended) finishPractice(body.endReason, body.text === "" ? 0 : LAST_LINE_MS);
 }
@@ -1061,7 +1062,7 @@ async function submitPending() {
     state.turnIndex = turn.index + 1;
     state.lines.push(body.text);
     addLine(body.text);
-    speakLine(body.text);
+    speakLine(body.text, body.speechToken);
     setStatus(turn.quiet ? QUIET_TURN : "");
     if (body.ended) beginFinish("candidate_ended", LAST_LINE_MS);
     return;

@@ -10,6 +10,7 @@ import { FakeSynthesizer } from "../tts/fake.ts";
 import type {
   LinePicker,
   PickInput,
+  PickResult,
   ResolvedConfig,
   ScriptConfig,
   SessionState,
@@ -101,6 +102,7 @@ async function harness(options: Options = {}) {
     transcriber: options.transcriber ?? new FakeTranscriber(),
     synthesizer: options.synthesizer ?? new FakeSynthesizer(),
     picker: options.picker ?? new FakePicker(script),
+    speechSecret: "test-speech-secret",
     now: () => new Date(clock.ms),
   });
   return { app, storage, clock };
@@ -210,7 +212,7 @@ class CountingPicker implements LinePicker {
     this.#inner = inner;
   }
 
-  async pick(input: PickInput): Promise<{ lineId: string }> {
+  async pick(input: PickInput): Promise<PickResult> {
     this.calls++;
     return this.#inner.pick(input);
   }
@@ -1369,6 +1371,53 @@ describe("speech", () => {
       expect(res.status, JSON.stringify(voice)).toBe(422);
       expect(await res.json()).toEqual({ error: "bad_voice" });
     }
+  });
+
+  it("speaks generated text only with the token from its turn, and rejects it without one", async () => {
+    const generator: LinePicker = {
+      async pick() {
+        return { text: "That gets my attention. Go on.", nextStage: "d2_lawsuit" };
+      },
+    };
+    const h = await harness({ picker: generator });
+    const start = await h.app.request("/api/practice", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: CODE }),
+    });
+    expect(start.status).toBe(201);
+    const started = await json<{ state: Record<string, unknown> }>(start);
+    const form = new FormData();
+    form.append(
+      "audio",
+      new Blob(["A Texas company got sued."], { type: "audio/webm" }),
+      "turn.webm",
+    );
+    form.append("mime", "audio/webm");
+    form.append("clientMs", "1000");
+    form.append("code", CODE);
+    form.append("state", JSON.stringify(started.state));
+    const turn = await h.app.request("/api/practice/turn", { method: "POST", body: form });
+    expect(turn.status).toBe(200);
+    const body = await json<{ text: string; speechToken?: string }>(turn);
+    expect(body.text).toBe("That gets my attention. Go on.");
+    expect(typeof body.speechToken).toBe("string");
+    expect(body.speechToken?.length).toBeGreaterThan(0);
+
+    const without = await postSpeech(h, body.text);
+    expect(without.status).toBe(422);
+    expect(await without.json()).toEqual({ error: "bad_text" });
+
+    const withTokenForm = speechForm(body.text);
+    withTokenForm.append("token", body.speechToken ?? "");
+    const withToken = await h.app.request("/api/speech", { method: "POST", body: withTokenForm });
+    expect(withToken.status).toBe(200);
+    expect(withToken.headers.get("content-type")).toBe("audio/wav");
+
+    const wrong = speechForm(body.text);
+    wrong.append("token", "0000000000000000");
+    const wrongToken = await h.app.request("/api/speech", { method: "POST", body: wrong });
+    expect(wrongToken.status).toBe(422);
   });
 
   it("answers 403 to a wrong or missing access code", async () => {

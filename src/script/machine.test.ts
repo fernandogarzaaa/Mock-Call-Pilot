@@ -288,6 +288,7 @@ describe("turnStep", () => {
           { id: "obj.busy", text: "FIXTURE obj.busy" },
           { id: "obj.pitchonly", text: "FIXTURE obj.pitchonly" },
         ],
+        allowedNextStages: ["d3_pitch", "d4_schedule"],
       },
     ]);
   });
@@ -389,6 +390,50 @@ describe("turnStep", () => {
       const result = await say(fixtureState(), "hi", picker);
       expect(result.state.turns[0]?.fallbackCause).toBe("picker_invalid_id");
     }
+  });
+
+  it("applies a generated reply in its own words and moves to its next stage", async () => {
+    const generator: LinePicker = {
+      async pick() {
+        return { text: "That gets my attention. Go on.", nextStage: "d2_lawsuit" };
+      },
+    };
+    const result = await say(fixtureState(), "A Texas company got sued.", generator);
+    expect(result.displayText).toBe("That gets my attention. Go on.");
+    expect(result.state.stage).toBe("d2_lawsuit");
+    expect(result.state.turns[0]?.prospect).toEqual({
+      lineId: null,
+      text: "That gets my attention. Go on.",
+    });
+    expect(result.ended).toBe(false);
+  });
+
+  it("ends with booked when the generated reply agrees to the meeting", async () => {
+    const generator: LinePicker = {
+      async pick() {
+        return {
+          text: "Alright. Twenty minutes, Thursday at ten.",
+          nextStage: "d4_schedule",
+          endReason: "booked",
+        };
+      },
+    };
+    const start = fixtureState({ stage: "d3_pitch" });
+    const result = await say(start, "Can we meet Thursday at ten?", generator);
+    expect(result.displayText).toBe("Alright. Twenty minutes, Thursday at ten.");
+    expect(result.state.endReason).toBe("booked");
+    expect(result.ended).toBe(true);
+  });
+
+  it("falls back when a generated reply names a stage it cannot move to", async () => {
+    const generator: LinePicker = {
+      async pick() {
+        return { text: "Sure, whatever.", nextStage: "d4_schedule" };
+      },
+    };
+    const result = await say(fixtureState(), "hi", generator);
+    expect(result.state.turns[0]?.fallbackCause).toBe("picker_invalid_id");
+    expect(result.displayText).toBe("FIXTURE fallback");
   });
 
   it("leaves the stage and used objections alone on a fallback", async () => {

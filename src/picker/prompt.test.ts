@@ -52,6 +52,7 @@ describe("userMessage", () => {
       { id: "d2.listen", text: "Go on." },
       { id: "obj.busy", text: "I'm busy." },
     ],
+    allowedNextStages: ["d2_lawsuit", "d3_pitch"],
   };
 
   it("names the stage", () => {
